@@ -1,8 +1,5 @@
 #include "esp_idf_common.h"
-#
-// --------------------------------------------------
-// MAIN
-// --------------------------------------------------
+
 void app_main(void)
 {
     delay(2000);
@@ -11,7 +8,9 @@ void app_main(void)
     delay(1000);
 
     printf("Initializing networking...");
+    delay(2000);
     init_networking();
+    delay(2000);
 
     printf("Task done...");
     delay(2000);
