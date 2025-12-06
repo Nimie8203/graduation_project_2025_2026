@@ -1,6 +1,8 @@
 #ifndef BLINKER_V1_H
 #define BLINKER_V1_H
 
+#include "esp_idf_common.h"
+
 #define LED_PIN 2
 
 void led_init(void);

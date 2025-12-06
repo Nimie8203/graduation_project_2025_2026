@@ -17,9 +17,10 @@
 #include <string.h>
 #include <ctype.h>
 
-// CUSTOM HEADERS MADE BY NIMA
+// CUSTOM HEADERS
 #include "blinker_v1.h"
 #include "serial_input.h"
+#include "networking.h"
 
 // SHORTCUT FUNCTIONS
 void delay(uint16_t time);

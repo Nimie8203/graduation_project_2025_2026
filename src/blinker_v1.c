@@ -1,6 +1,6 @@
-#include "esp_idf_common.h"
+#include "blinker_v1.h"
 
-static bool led_state = false;
+bool led_state = false;
 
 void led_init(void)
 {

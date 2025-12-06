@@ -1,4 +1,4 @@
-#include "esp_idf_common.h"
+#include "serial_input.h"
 
 void get_serial_input(char *buffer, size_t size)
 {
