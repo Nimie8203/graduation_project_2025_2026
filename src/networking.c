@@ -2,9 +2,6 @@
 
 const char *TAG = "SOFTAP_HTTP";
 
-// --------------------------------------------------
-// YOUR ACTION FUNCTION
-// --------------------------------------------------
 void give_command(int val)
 {
     // ESP_LOGI(TAG, "Action function called with val=%d", val);
@@ -17,9 +14,6 @@ void give_command(int val)
     }
 }
 
-// --------------------------------------------------
-// HTTP API HANDLER
-// --------------------------------------------------
 esp_err_t api_cmd_handler(httpd_req_t *req)
 {
     // Add CORS headers
@@ -50,9 +44,6 @@ esp_err_t api_cmd_handler(httpd_req_t *req)
     return ESP_FAIL;
 }
 
-// --------------------------------------------------
-// HTTP SERVER SETUP
-// --------------------------------------------------
 httpd_handle_t start_webserver(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
@@ -80,9 +71,6 @@ httpd_handle_t start_webserver(void)
     return NULL;
 }
 
-// --------------------------------------------------
-// WIFI SOFTAP
-// --------------------------------------------------
 void wifi_init_softap(void)
 {
     esp_netif_create_default_wifi_ap();
@@ -113,9 +101,6 @@ void wifi_init_softap(void)
     ESP_LOGI(TAG, "SoftAP created. SSID: ESP32_AP Password: 12345678");
 }
 
-// --------------------------------------------------
-// INITIALIZE NETWORKING
-// --------------------------------------------------
 void init_networking(void)
 {
     // Initialize NVS
