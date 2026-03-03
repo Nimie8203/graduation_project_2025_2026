@@ -2,8 +2,8 @@
 #define BLINKER_V1_H
 
 #include "esp_idf_common.h"
+#include <stdbool.h>
 
-#define LED_PIN 2
 
 void led_init(void);
 void led_on(void);
@@ -15,7 +15,8 @@ void blink_5_task(void);
 void blink_n_task(int8_t count);
 void blink_nima(void);
 void blink_aseel(void);
-// HUDA SHALL ADD HER BLINK MODE
+void huda_blink(void);
 
+void blink_wifi(bool is_wifi_on);
 
 #endif

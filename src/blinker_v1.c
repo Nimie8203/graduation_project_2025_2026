@@ -111,3 +111,41 @@ void blink_aseel()
     delay(600);
     led_off();
 }
+
+void huda_blink()
+{
+    printf("\nBlinking Huda...\n");
+    delay(1000);
+    
+    led_init();
+    led_on();
+    delay(200);
+    led_off();
+    delay(200);
+    led_on();
+    delay(200);
+    led_off();
+    delay(200);
+    led_on();
+    delay(200);
+    led_off();
+    delay(200);
+    led_on();
+    delay(200);
+    led_off();
+}
+
+void blink_wifi(bool is_wifi_on)
+{
+    while (is_wifi_on)
+    {
+        led_on();
+        delay(700);
+        led_off();
+        delay(100);
+        led_on();
+        delay(100);
+        led_off();
+        delay(1000);
+    }
+}

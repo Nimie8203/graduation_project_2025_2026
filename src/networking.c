@@ -2,6 +2,10 @@
 
 const char *TAG = "SOFTAP_HTTP";
 
+#define ESP32_SSID "ESP32_AP"
+#define ESP32_PASS "82138213"
+#define COMMAND_BUFFER_SIZE 64
+
 void give_command(int val)
 {
     // ESP_LOGI(TAG, "Action function called with val=%d", val);
@@ -21,7 +25,7 @@ esp_err_t api_cmd_handler(httpd_req_t *req)
     httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
     
-    char buf[64];
+    char buf[COMMAND_BUFFER_SIZE];
     int ret = httpd_req_get_url_query_str(req, buf, sizeof(buf));
 
     if (ret == ESP_OK)
@@ -80,16 +84,16 @@ void wifi_init_softap(void)
 
     wifi_config_t wifi_config = {
         .ap = {
-            .ssid = "ESP32_AP",
-            .ssid_len = strlen("ESP32_AP"),
+            .ssid = ESP32_SSID,
+            .ssid_len = strlen(ESP32_SSID),
             .channel = 1,
-            .password = "12345678",
+            .password = ESP32_PASS,
             .max_connection = 4,
             .authmode = WIFI_AUTH_WPA_WPA2_PSK,
         },
     };
 
-    if (strlen("12345678") == 0)
+    if (strlen(ESP32_PASS) == 0)
     {
         wifi_config.ap.authmode = WIFI_AUTH_OPEN;
     }
@@ -98,7 +102,7 @@ void wifi_init_softap(void)
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI(TAG, "SoftAP created. SSID: ESP32_AP Password: 12345678");
+    ESP_LOGI(TAG, "SoftAP created!");
 }
 
 void init_networking(void)

@@ -12,15 +12,20 @@
 #include "esp_netif.h"
 #include "esp_http_server.h"
 
+#define LED_PIN 2
+
+
 // C HEADERS
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 // CUSTOM HEADERS
 #include "blinker_v1.h"
 #include "serial_input.h"
 #include "networking.h"
+#include "button.h"
 
 // SHORTCUT FUNCTIONS
 void delay(uint16_t time);
