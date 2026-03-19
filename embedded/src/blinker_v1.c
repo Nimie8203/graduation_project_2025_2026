@@ -25,6 +25,17 @@ bool led_get_state(void)
     return led_state;
 }
 
+void led_command_indicate(void)
+{
+    led_off();
+    delay(500);
+    for(int8_t i = 1; i<5; i++) {
+        led_on();
+        delay(100);
+        led_off();
+    }
+}
+
 void led_print_state(void)
 {
     printf("LED state: %s", led_state ? "ON" : "OFF");
@@ -116,7 +127,7 @@ void huda_blink()
 {
     printf("\nBlinking Huda...\n");
     delay(1000);
-    
+
     led_init();
     led_on();
     delay(200);
