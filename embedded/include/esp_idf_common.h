@@ -14,7 +14,6 @@
 
 #define LED_PIN 2
 
-
 // C HEADERS
 #include <stdio.h>
 #include <string.h>
@@ -26,6 +25,9 @@
 #include "serial_input.h"
 #include "networking.h"
 #include "button.h"
+
+// EXTERNAL LIBRARYS AND DRIVERS
+#include "dht.h"
 
 // SHORTCUT FUNCTIONS
 void delay(uint16_t time);
