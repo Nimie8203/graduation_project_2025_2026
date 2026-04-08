@@ -62,7 +62,7 @@ void lcd_send_data(uint8_t data) { //Sends a character
 
 void lcd_init(void) {  //Starts LCD
 
-    gpio_set_direction(RS, GPIO_MODE_OUTPUT); /Set all pins as output/
+    gpio_set_direction(RS, GPIO_MODE_OUTPUT); //Set all pins as output
     gpio_set_direction(EN, GPIO_MODE_OUTPUT);
     gpio_set_direction(D4, GPIO_MODE_OUTPUT);
     gpio_set_direction(D5, GPIO_MODE_OUTPUT);
