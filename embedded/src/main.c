@@ -1,12 +1,13 @@
 #include "esp_idf_common.h"
 
-bool is_wifi_on = false;
-
 void app_main(void)
 {
-    blink_5_task();
+    ESP_LOGI(GENERAL_TAG, "Initializing Devices");
     init_networking();
-    is_wifi_on = true;
+    init_pumps();
+    init_led();
+    blink_5_task();
+    ESP_LOGI(GENERAL_TAG, "BOOTED");
 
     while (1)
     {

@@ -3,7 +3,7 @@
 
 #include "esp_idf_common.h"
 
-void led_init(void);
+void init_led(void);
 void led_on(void);
 void led_off(void);
 void led_command_indicate(void);

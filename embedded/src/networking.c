@@ -1,9 +1,5 @@
 #include "networking.h"
 
-const char *TAG = "SOFTAP_HTTP";
-
-#define ESP32_SSID "ESP32_AP"
-#define ESP32_PASS "82138213"
 #define COMMAND_BUFFER_SIZE 64
 
 static void send_json(httpd_req_t *req, cJSON *root)
@@ -148,7 +144,7 @@ esp_err_t api_cmd_handler(httpd_req_t *req)
         if (httpd_query_key_value(buf, "val", param_val, sizeof(param_val)) == ESP_OK)
         {
             int value = atoi(param_val);
-            ESP_LOGI(TAG, "CMD: %d", value);
+            ESP_LOGI(WIFI_TAG, "CMD: %d", value);
 
             cJSON *response = execute_command(value);
             send_json(req, response); // response JSON includes sensor data
@@ -193,7 +189,7 @@ httpd_handle_t start_webserver(void)
     httpd_handle_t server = NULL;
     if (httpd_start(&server, &config) != ESP_OK)
     {
-        ESP_LOGE(TAG, "Failed to start HTTP server");
+        ESP_LOGE(WIFI_TAG, "Failed to start HTTP server");
         return NULL;
     }
 
@@ -208,7 +204,7 @@ httpd_handle_t start_webserver(void)
     httpd_register_uri_handler(server, &api_status);
     httpd_register_uri_handler(server, &api_options);
 
-    ESP_LOGI(TAG, "HTTP server started");
+    ESP_LOGI(WIFI_TAG, "HTTP server started");
     return server;
 }
 
@@ -239,7 +235,7 @@ void wifi_init_softap(void)
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI(TAG, "SoftAP created!");
+    ESP_LOGI(WIFI_TAG, "SoftAP created!");
 }
 
 void init_networking(void)
@@ -249,4 +245,6 @@ void init_networking(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     wifi_init_softap();
     start_webserver();
+    g_state.wifi_state = true;
+    ESP_LOGI(WIFI_TAG, "Networking Initialized");
 }
