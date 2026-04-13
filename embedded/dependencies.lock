@@ -20,7 +20,7 @@ dependencies:
   idf:
     source:
       type: idf
-    version: 5.5.0
+    version: 5.5.3
 direct_dependencies:
 - esp-idf-lib/esp_idf_lib_helpers
 manifest_hash: 7f8b63735675845f865f88be7adb3ba8a1d16a2338392739e1ba591f87076145
