@@ -1,9 +1,6 @@
 #include "button.h"
 
-
 void on_press(){
-
-    led_init();
 
     // Configure button GPIO as input
     gpio_set_direction(BUTTON_PIN, GPIO_MODE_INPUT);

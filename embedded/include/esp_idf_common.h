@@ -25,9 +25,40 @@
 #include "serial_input.h"
 #include "networking.h"
 #include "button.h"
+#include "lcd.h"
+#include "t_h_sensor.h"
+#include "pump.h"
 
 // EXTERNAL LIBRARYS AND DRIVERS
 #include "dht.h"
+
+// STATUS
+typedef struct
+{
+    int16_t temperature;
+    int16_t humidity;
+    int16_t light_intensity;
+    bool led_state;
+    bool pump_1_state;
+    bool pump_2_state;
+    bool wifi_state;
+    
+} device_status_t;
+
+extern device_status_t g_state;
+
+
+// TAGS FOR DEBUG
+
+extern const char *LED_TAG;
+extern const char *PUMP_TAG;
+extern const char *WIFI_TAG;
+extern const char *TEMP_TAG;
+extern const char *HUM_TAG;
+extern const char *LDR_TAG;
+extern const char *FLOW_TAG;
+extern const char *MOIST_TAG;
+extern const char *GENERAL_TAG;
 
 // SHORTCUT FUNCTIONS
 void delay(uint16_t time);

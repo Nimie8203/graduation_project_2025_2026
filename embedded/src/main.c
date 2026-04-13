@@ -1,23 +1,18 @@
 #include "esp_idf_common.h"
 
-bool is_wifi_on = false;
-
 void app_main(void)
 {
-    delay(2000);
-    blink_5_task();
-    printf("Booted!\n");
-    delay(1000);
-
-    on_press();
-
-    printf("Initializing networking...\n");
-    delay(2000);
+    ESP_LOGI(GENERAL_TAG, "Initializing Devices");
     init_networking();
-    delay(2000);
-    is_wifi_on = true;
-    //blink_wifi(is_wifi_on);
+    init_pumps();
+    init_led();
+    blink_5_task();
+    ESP_LOGI(GENERAL_TAG, "BOOTED");
 
-    printf("Task done...\n");
-    delay(2000);
+    while (1)
+    {
+        read_th(&g_state.humidity, &g_state.temperature);
+
+        delay(2000);
+    }
 }

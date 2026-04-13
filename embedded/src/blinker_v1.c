@@ -1,49 +1,40 @@
 #include "blinker_v1.h"
 
-bool led_state = false;
-
-void led_init(void)
+void init_led(void)
 {
     gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT);
     led_off();
+    ESP_LOGI(LED_TAG, "LED Initated");
 }
 
 void led_on(void)
 {
     gpio_set_level(LED_PIN, 1);
-    led_state = true;
+    g_state.led_state = true;
+    ESP_LOGI(LED_TAG, "LED On");
 }
 
 void led_off(void)
 {
     gpio_set_level(LED_PIN, 0);
-    led_state = false;
-}
-
-bool led_get_state(void)
-{
-    return led_state;
+    g_state.led_state = false;
+    ESP_LOGI(LED_TAG, "LED Off");
 }
 
 void led_command_indicate(void)
 {
     led_off();
     delay(500);
-    for(int8_t i = 1; i<5; i++) {
+    for (int8_t i = 1; i <= 5; i++)
+    {
         led_on();
         delay(100);
         led_off();
     }
 }
 
-void led_print_state(void)
-{
-    printf("LED state: %s", led_state ? "ON" : "OFF");
-}
-
 void blink_5_task(void)
 {
-    led_init();
     uint8_t count = 1;
     while (count <= 5)
     {
@@ -67,7 +58,6 @@ void blink_n_task(int8_t count)
 
         usr_count = atoi(input);
 
-        led_init();
         while (iteration <= usr_count)
         {
             printf("\n%d\n", iteration);
@@ -80,7 +70,6 @@ void blink_n_task(int8_t count)
     }
     else
     {
-        led_init();
         while (iteration <= count)
         {
             printf("\nDEBUG = %d\n", iteration);
@@ -98,7 +87,6 @@ void blink_nima(void)
     printf("\nBlinking Nima...\n");
     delay(1000);
 
-    led_init();
     led_on();
     delay(600);
     led_off();
@@ -113,7 +101,6 @@ void blink_aseel()
     printf("\nBlinking Aseel...\n");
     delay(1000);
 
-    led_init();
     led_on();
     delay(200);
     led_off();
@@ -123,12 +110,11 @@ void blink_aseel()
     led_off();
 }
 
-void huda_blink()
+void blink_huda()
 {
     printf("\nBlinking Huda...\n");
     delay(1000);
 
-    led_init();
     led_on();
     delay(200);
     led_off();
