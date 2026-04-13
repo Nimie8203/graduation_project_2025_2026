@@ -24,14 +24,9 @@ enum Commands
     PROFILE
 };
 
-extern device_status_t g_status;
-
 #define ESP32_SSID "ESP32_AP"
 #define ESP32_PASS "82138213"
 
-static void send_json(httpd_req_t *req, cJSON *root);
-static void add_cors(httpd_req_t *req);
-static cJSON *execute_command(int val);
 esp_err_t api_cmd_handler(httpd_req_t *req);
 esp_err_t api_status_handler(httpd_req_t *req);
 esp_err_t options_handler(httpd_req_t *req);

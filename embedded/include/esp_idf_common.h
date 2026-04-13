@@ -45,19 +45,20 @@ typedef struct
     
 } device_status_t;
 
-device_status_t g_state = {0};
+extern device_status_t g_state;
+
 
 // TAGS FOR DEBUG
 
-const char *LED_TAG = "LED";
-const char *PUMP_TAG = "PUMP";
-const char *WIFI_TAG = "WIFI";
-const char *TEMP_TAG = "DHT_TEMP";
-const char *HUM_TAG = "DHT_HUM";
-const char *LDR_TAG = "LDR_SENS";
-const char *FLOW_TAG = "FLOW_SENS";
-const char *MOIST_TAG = "MOIST_SENS";
-const char *GENERAL_TAG = "GENERAL";
+extern const char *LED_TAG;
+extern const char *PUMP_TAG;
+extern const char *WIFI_TAG;
+extern const char *TEMP_TAG;
+extern const char *HUM_TAG;
+extern const char *LDR_TAG;
+extern const char *FLOW_TAG;
+extern const char *MOIST_TAG;
+extern const char *GENERAL_TAG;
 
 // SHORTCUT FUNCTIONS
 void delay(uint16_t time);

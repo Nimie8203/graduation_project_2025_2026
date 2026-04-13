@@ -28,55 +28,55 @@ static cJSON *execute_command(int val)
     {
     case LED_ON:
         led_on();
-        g_status.led_state = 1;
+        g_state.led_state = 1;
         cJSON_AddStringToObject(root, "status", "ok");
         cJSON_AddStringToObject(root, "msg", "LED turned on");
         break;
 
     case LED_OFF:
         led_off();
-        g_status.led_state = 0;
+        g_state.led_state = 0;
         cJSON_AddStringToObject(root, "status", "ok");
         cJSON_AddStringToObject(root, "msg", "LED turned off");
         break;
 
     case LED_READ:
         cJSON_AddStringToObject(root, "status", "ok");
-        cJSON_AddNumberToObject(root, "led", g_status.led_state);
+        cJSON_AddNumberToObject(root, "led", g_state.led_state);
         break;
 
     case PUMP_1_ON:
         pump_on(1);
-        g_status.pump_1_state = true;
+        g_state.pump_1_state = true;
         cJSON_AddStringToObject(root, "status", "ok");
         cJSON_AddStringToObject(root, "msg", "Pump 1 turned on");
         break;
 
     case PUMP_1_OFF:
         pump_off(1);
-        g_status.pump_1_state = false;
+        g_state.pump_1_state = false;
         cJSON_AddStringToObject(root, "status", "ok");
         cJSON_AddStringToObject(root, "msg", "Pump 1 turned off");
         break;
     case PUMP_2_ON:
         pump_on(2);
-        g_status.pump_2_state = true;
+        g_state.pump_2_state = true;
         cJSON_AddStringToObject(root, "status", "ok");
         cJSON_AddStringToObject(root, "msg", "Pump 2 turned on");
         break;
 
     case PUMP_2_OFF:
         pump_off(2);
-        g_status.pump_2_state = false;
+        g_state.pump_2_state = false;
         cJSON_AddStringToObject(root, "status", "ok");
         cJSON_AddStringToObject(root, "msg", "Pump 2 turned off");
         break;
 
     case TH_READ:
-        read_th(&g_status.humidity, &g_status.temperature);
+        read_th(&g_state.humidity, &g_state.temperature);
         cJSON_AddStringToObject(root, "status", "ok");
-        cJSON_AddNumberToObject(root, "temperature", g_status.temperature);
-        cJSON_AddNumberToObject(root, "humidity", g_status.humidity);
+        cJSON_AddNumberToObject(root, "temperature", g_state.temperature);
+        cJSON_AddNumberToObject(root, "humidity", g_state.humidity);
         break;
 
     case LIGHT_READ:
@@ -104,18 +104,18 @@ static cJSON *execute_command(int val)
     case STATUS_LED:
     case STATUS_PUMP_1:
         cJSON_AddStringToObject(root, "status", "ok");
-        cJSON_AddNumberToObject(root, "led", g_status.led_state);
-        cJSON_AddNumberToObject(root, "pump", g_status.pump_1_state);
-        cJSON_AddNumberToObject(root, "temperature", g_status.temperature);
-        cJSON_AddNumberToObject(root, "humidity", g_status.humidity);
+        cJSON_AddNumberToObject(root, "led", g_state.led_state);
+        cJSON_AddNumberToObject(root, "pump", g_state.pump_1_state);
+        cJSON_AddNumberToObject(root, "temperature", g_state.temperature);
+        cJSON_AddNumberToObject(root, "humidity", g_state.humidity);
         break;
 
     case STATUS_PUMP_2:
         cJSON_AddStringToObject(root, "status", "ok");
-        cJSON_AddNumberToObject(root, "led", g_status.led_state);
-        cJSON_AddNumberToObject(root, "pump", g_status.pump_2_state);
-        cJSON_AddNumberToObject(root, "temperature", g_status.temperature);
-        cJSON_AddNumberToObject(root, "humidity", g_status.humidity);
+        cJSON_AddNumberToObject(root, "led", g_state.led_state);
+        cJSON_AddNumberToObject(root, "pump", g_state.pump_2_state);
+        cJSON_AddNumberToObject(root, "temperature", g_state.temperature);
+        cJSON_AddNumberToObject(root, "humidity", g_state.humidity);
         break;
 
     case PROFILE:
@@ -160,14 +160,14 @@ esp_err_t api_status_handler(httpd_req_t *req)
 {
     add_cors(req);
 
-    // Optionally do a fresh sensor read here, or just return cached g_status
+    // Optionally do a fresh sensor read here, or just return cached g_state
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "status", "ok");
-    cJSON_AddNumberToObject(root, "led", g_status.led_state);
-    cJSON_AddNumberToObject(root, "pump 1", g_status.pump_1_state);
-    cJSON_AddNumberToObject(root, "pump 2", g_status.pump_2_state);
-    cJSON_AddNumberToObject(root, "temperature", g_status.temperature);
-    cJSON_AddNumberToObject(root, "humidity", g_status.humidity);
+    cJSON_AddNumberToObject(root, "led", g_state.led_state);
+    cJSON_AddNumberToObject(root, "pump 1", g_state.pump_1_state);
+    cJSON_AddNumberToObject(root, "pump 2", g_state.pump_2_state);
+    cJSON_AddNumberToObject(root, "temperature", g_state.temperature);
+    cJSON_AddNumberToObject(root, "humidity", g_state.humidity);
 
     send_json(req, root);
     return ESP_OK;

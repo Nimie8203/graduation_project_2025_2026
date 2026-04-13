@@ -10,14 +10,14 @@ void init_led(void)
 void led_on(void)
 {
     gpio_set_level(LED_PIN, 1);
-    g_status.led_state = true;
+    g_state.led_state = true;
     ESP_LOGI(LED_TAG, "LED On");
 }
 
 void led_off(void)
 {
     gpio_set_level(LED_PIN, 0);
-    g_status.led_state = false;
+    g_state.led_state = false;
     ESP_LOGI(LED_TAG, "LED Off");
 }
 
@@ -25,7 +25,8 @@ void led_command_indicate(void)
 {
     led_off();
     delay(500);
-    for(int8_t i = 1; i<5; i++) {
+    for (int8_t i = 1; i <= 5; i++)
+    {
         led_on();
         delay(100);
         led_off();

@@ -11,7 +11,7 @@ void app_main(void)
 
     while (1)
     {
-        read_th(&g_status.humidity, &g_status.temperature);
+        read_th(&g_state.humidity, &g_state.temperature);
 
         delay(2000);
     }
