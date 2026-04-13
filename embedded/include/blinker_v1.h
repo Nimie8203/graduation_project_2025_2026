@@ -10,6 +10,7 @@ void led_on(void);
 void led_off(void);
 bool led_get_state(void);
 void led_print_state(void);
+void led_command_indicate(void);
 
 void blink_5_task(void);
 void blink_n_task(int8_t count);
