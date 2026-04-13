@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/controls_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F9FAFB"
+    tools:context=".ControlsActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Controls"
+            android:textColor="@android:color/black"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Manage and configure your sensor network"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="16sp" />
+
+        <!-- Manual Irrigation Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Manual Irrigation"
+            android:textColor="@android:color/black"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="Trigger a manual irrigation cycle"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/button_irrigate_now"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Irrigate Now"/>
+
+        <!-- Sensor Management Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Sensor Management"
+            android:textColor="@android:color/black"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="Enable or disable individual sensors"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="14sp" />
+
+        <!-- Sensor Cards -->
+        <include android:id="@+id/control_humidity" layout="@layout/card_sensor_control"/>
+        <include android:id="@+id/control_temperature" layout="@layout/card_sensor_control"/>
+        <include android:id="@+id/control_soil_moisture" layout="@layout/card_sensor_control"/>
+        <include android:id="@+id/control_light" layout="@layout/card_sensor_control"/>
+        <include android:id="@+id/control_air_quality" layout="@layout/card_sensor_control"/>
+
+        <!-- Alert Thresholds Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Alert Thresholds"
+            android:textColor="@android:color/black"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="Configure automatic alert triggers"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="14sp" />
+
+        <!-- Threshold Sliders -->
+        <include android:id="@+id/slider_irrigation" layout="@layout/card_threshold_slider"/>
+        <include android:id="@+id/slider_temperature" layout="@layout/card_threshold_slider"/>
+        <include android:id="@+id/slider_humidity" layout="@layout/card_threshold_slider"/>
+
+    </LinearLayout>
+</ScrollView>

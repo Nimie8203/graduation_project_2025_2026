@@ -6,15 +6,74 @@ const char *TAG = "SOFTAP_HTTP";
 #define ESP32_PASS "82138213"
 #define COMMAND_BUFFER_SIZE 64
 
+enum Commands
+{
+    LED_ON,
+    LED_OFF,
+    PUMP_ON,
+    PUMP_OFF,
+    LED_READ,
+    TEMP_READ,
+    HUMIDITY_READ,
+    LIGHT_READ,
+    MOISTURE_READ,
+    FLOW_READ,
+    STATUS_GENERAL,
+    STATUS_LED,
+    STATUS_PUMP,
+    PROFILE
+};
+
 void give_command(int val)
 {
     // ESP_LOGI(TAG, "Action function called with val=%d", val);
     //  Your custom logic here
     switch (val)
     {
-        case 1: led_on(); printf("LED turned on from website!\n"); break;
-        case 2: led_off(); printf("LED turned off from website!\n"); break;
-        case 3: led_print_state(); break;
+        case LED_ON:
+            led_on();
+            printf("LED turned on from website!\n");
+            break;
+        case LED_OFF:
+            led_off();
+            printf("LED turned off from website!\n");
+            break;
+        case LED_READ:
+            led_print_state();
+            break;
+        case PUMP_ON:
+            led_command_indicate();
+            break;
+        case PUMP_OFF:
+            led_command_indicate();
+            break;
+        case TEMP_READ:
+            led_command_indicate();
+            break;
+        case HUMIDITY_READ:
+            led_command_indicate();
+            break;
+        case LIGHT_READ:
+            led_command_indicate();
+            break;
+        case MOISTURE_READ:
+            led_command_indicate();
+            break;
+        case FLOW_READ:
+            led_command_indicate();
+            break;
+        case STATUS_GENERAL:
+            led_command_indicate();
+            break;
+        case STATUS_LED:
+            led_command_indicate();
+            break;
+        case STATUS_PUMP:
+            led_command_indicate();
+            break;
+        case PROFILE:
+            led_command_indicate();
+            break;
     }
 }
 
@@ -24,7 +83,7 @@ esp_err_t api_cmd_handler(httpd_req_t *req)
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
-    
+
     char buf[COMMAND_BUFFER_SIZE];
     int ret = httpd_req_get_url_query_str(req, buf, sizeof(buf));
 
@@ -113,6 +172,6 @@ void init_networking(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     wifi_init_softap();
-    
+
     start_webserver();
 }
