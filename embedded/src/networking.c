@@ -6,6 +6,8 @@ const char *TAG = "SOFTAP_HTTP";
 #define ESP32_PASS "82138213"
 #define COMMAND_BUFFER_SIZE 64
 
+int16_t temp, hum = 0;
+
 enum Commands
 {
     LED_ON,
@@ -13,8 +15,7 @@ enum Commands
     PUMP_ON,
     PUMP_OFF,
     LED_READ,
-    TEMP_READ,
-    HUMIDITY_READ,
+    TH_READ,
     LIGHT_READ,
     MOISTURE_READ,
     FLOW_READ,
@@ -47,11 +48,8 @@ void give_command(int val)
         case PUMP_OFF:
             led_command_indicate();
             break;
-        case TEMP_READ:
-            led_command_indicate();
-            break;
-        case HUMIDITY_READ:
-            led_command_indicate();
+        case TH_READ:
+            read_th(&hum, &temp);
             break;
         case LIGHT_READ:
             led_command_indicate();

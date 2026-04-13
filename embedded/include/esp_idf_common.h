@@ -25,6 +25,8 @@
 #include "serial_input.h"
 #include "networking.h"
 #include "button.h"
+#include "lcd.h"
+#include "t_h_sensor.h"
 
 // EXTERNAL LIBRARYS AND DRIVERS
 #include "dht.h"
