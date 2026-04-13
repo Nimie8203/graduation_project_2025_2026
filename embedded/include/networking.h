@@ -4,20 +4,14 @@
 #include "esp_idf_common.h"
 #include "cJSON.h"
 
-typedef struct
-{
-    int16_t temperature;
-    int16_t humidity;
-    int led_state;
-    int pump_state;
-} device_status_t;
-
 enum Commands
 {
     LED_ON,
     LED_OFF,
-    PUMP_ON,
-    PUMP_OFF,
+    PUMP_1_ON,
+    PUMP_1_OFF,
+    PUMP_2_ON,
+    PUMP_2_OFF,
     LED_READ,
     TH_READ,
     LIGHT_READ,
@@ -25,7 +19,8 @@ enum Commands
     FLOW_READ,
     STATUS_GENERAL,
     STATUS_LED,
-    STATUS_PUMP,
+    STATUS_PUMP_1,
+    STATUS_PUMP_2,
     PROFILE
 };
 

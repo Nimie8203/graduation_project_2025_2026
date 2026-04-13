@@ -6,9 +6,6 @@ const char *TAG = "SOFTAP_HTTP";
 #define ESP32_PASS "82138213"
 #define COMMAND_BUFFER_SIZE 64
 
-// Global state — update this from your sensor modules too
-device_status_t g_status = {0};
-
 static void send_json(httpd_req_t *req, cJSON *root)
 {
     char *json_str = cJSON_PrintUnformatted(root);
@@ -52,24 +49,36 @@ static cJSON *execute_command(int val)
         cJSON_AddNumberToObject(root, "led", g_status.led_state);
         break;
 
-    case PUMP_ON:
-        // pump_on();
-        g_status.pump_state = 1;
+    case PUMP_1_ON:
+        pump_on(1);
+        g_status.pump_1_state = true;
         cJSON_AddStringToObject(root, "status", "ok");
-        cJSON_AddStringToObject(root, "msg", "Pump turned on");
+        cJSON_AddStringToObject(root, "msg", "Pump 1 turned on");
         break;
 
-    case PUMP_OFF:
-        // pump_off();
-        g_status.pump_state = 0;
+    case PUMP_1_OFF:
+        pump_off(1);
+        g_status.pump_1_state = false;
         cJSON_AddStringToObject(root, "status", "ok");
-        cJSON_AddStringToObject(root, "msg", "Pump turned off");
+        cJSON_AddStringToObject(root, "msg", "Pump 1 turned off");
+        break;
+    case PUMP_2_ON:
+        pump_on(2);
+        g_status.pump_2_state = true;
+        cJSON_AddStringToObject(root, "status", "ok");
+        cJSON_AddStringToObject(root, "msg", "Pump 2 turned on");
+        break;
+
+    case PUMP_2_OFF:
+        pump_off(2);
+        g_status.pump_2_state = false;
+        cJSON_AddStringToObject(root, "status", "ok");
+        cJSON_AddStringToObject(root, "msg", "Pump 2 turned off");
         break;
 
     case TH_READ:
         read_th(&g_status.humidity, &g_status.temperature);
         cJSON_AddStringToObject(root, "status", "ok");
-        // Assuming fixed-point: divide by 10 if your driver returns e.g. 253 for 25.3°C
         cJSON_AddNumberToObject(root, "temperature", g_status.temperature);
         cJSON_AddNumberToObject(root, "humidity", g_status.humidity);
         break;
@@ -97,11 +106,18 @@ static cJSON *execute_command(int val)
 
     case STATUS_GENERAL:
     case STATUS_LED:
-    case STATUS_PUMP:
-        // Fall through to the /api/status handler style
+    case STATUS_PUMP_1:
         cJSON_AddStringToObject(root, "status", "ok");
         cJSON_AddNumberToObject(root, "led", g_status.led_state);
-        cJSON_AddNumberToObject(root, "pump", g_status.pump_state);
+        cJSON_AddNumberToObject(root, "pump", g_status.pump_1_state);
+        cJSON_AddNumberToObject(root, "temperature", g_status.temperature);
+        cJSON_AddNumberToObject(root, "humidity", g_status.humidity);
+        break;
+
+    case STATUS_PUMP_2:
+        cJSON_AddStringToObject(root, "status", "ok");
+        cJSON_AddNumberToObject(root, "led", g_status.led_state);
+        cJSON_AddNumberToObject(root, "pump", g_status.pump_2_state);
         cJSON_AddNumberToObject(root, "temperature", g_status.temperature);
         cJSON_AddNumberToObject(root, "humidity", g_status.humidity);
         break;
@@ -152,7 +168,8 @@ esp_err_t api_status_handler(httpd_req_t *req)
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "status", "ok");
     cJSON_AddNumberToObject(root, "led", g_status.led_state);
-    cJSON_AddNumberToObject(root, "pump", g_status.pump_state);
+    cJSON_AddNumberToObject(root, "pump 1", g_status.pump_1_state);
+    cJSON_AddNumberToObject(root, "pump 2", g_status.pump_2_state);
     cJSON_AddNumberToObject(root, "temperature", g_status.temperature);
     cJSON_AddNumberToObject(root, "humidity", g_status.humidity);
 

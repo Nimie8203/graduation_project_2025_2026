@@ -1,7 +1,5 @@
 #include "blinker_v1.h"
 
-bool led_state = false;
-
 void led_init(void)
 {
     gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT);
@@ -11,18 +9,13 @@ void led_init(void)
 void led_on(void)
 {
     gpio_set_level(LED_PIN, 1);
-    led_state = true;
+    g_status.led_state = true;
 }
 
 void led_off(void)
 {
     gpio_set_level(LED_PIN, 0);
-    led_state = false;
-}
-
-bool led_get_state(void)
-{
-    return led_state;
+    g_status.led_state = false;
 }
 
 void led_command_indicate(void)
@@ -34,11 +27,6 @@ void led_command_indicate(void)
         delay(100);
         led_off();
     }
-}
-
-void led_print_state(void)
-{
-    printf("LED state: %s", led_state ? "ON" : "OFF");
 }
 
 void blink_5_task(void)
@@ -123,7 +111,7 @@ void blink_aseel()
     led_off();
 }
 
-void huda_blink()
+void blink_huda()
 {
     printf("\nBlinking Huda...\n");
     delay(1000);
