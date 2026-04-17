@@ -3,4 +3,6 @@
 
 #include "esp_idf_common.h"
 
+#define LDR_PIN 36
+
 #endif

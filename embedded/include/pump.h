@@ -8,8 +8,8 @@ typedef enum {
     PUMP_2
 } PUMP;
 
-#define PUMP_1_PIN 1
-#define PUMP_2_PIN 3
+#define PUMP_1_PIN 16
+#define PUMP_2_PIN 17
 
 void init_pumps();
 void pump_on(PUMP pump_num);

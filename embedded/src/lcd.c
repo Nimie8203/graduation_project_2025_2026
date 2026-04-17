@@ -19,9 +19,9 @@ static void lcd_delay(void) {  //Small delay so LCD can process data
 }
 
 static void lcd_enable(void) {
-    gpio_set_level(EN, 1);  //Turns EN ON then OFF, this will tell the lcd read the data now
+    gpio_set_level(LCD_E_PIN, 1);  //Turns EN ON then OFF, this will tell the lcd read the data now
     lcd_delay();
-    gpio_set_level(EN, 0);
+    gpio_set_level(LCD_E_PIN, 0);
 }
 
 static void lcd_send_nibble(uint8_t data) { //Sends 4 bits only (because LCD is in 4-bit mode)
@@ -63,7 +63,7 @@ void lcd_send_data(uint8_t data) { //Sends a character
 void lcd_init(void) {  //Starts LCD
 
     gpio_set_direction(RS, GPIO_MODE_OUTPUT); //Set all pins as output
-    gpio_set_direction(EN, GPIO_MODE_OUTPUT);
+    gpio_set_direction(LCD_E_PIN, GPIO_MODE_OUTPUT);
     gpio_set_direction(D4, GPIO_MODE_OUTPUT);
     gpio_set_direction(D5, GPIO_MODE_OUTPUT);
     gpio_set_direction(D6, GPIO_MODE_OUTPUT);
