@@ -3,7 +3,7 @@
 
 #include "esp_idf_common.h"
 
-#define BUTTON_PIN 4
+#define BUTTON_PIN 21
 
 void on_press(void);
 
