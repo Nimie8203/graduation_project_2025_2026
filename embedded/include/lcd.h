@@ -4,6 +4,13 @@
 #include "esp_idf_common.h" //ESP system stuff
 #include <stdint.h> // standard data types (im worried of it,it gave me falshbacks * _ *  )
 
+#define LCD_RS_PIN 13
+#define LCD_E_PIN 12
+#define LCD_D4_PIN 14
+#define LCD_D5_PIN 27
+#define LCD_D6_PIN 26
+#define LCD_D7_PIN 25
+
 
 /* 1. Initialization */
 void lcd_init(void);   //Prepares the LCD to work

@@ -12,8 +12,6 @@
 #include "esp_netif.h"
 #include "esp_http_server.h"
 
-#define LED_PIN 2
-
 // C HEADERS
 #include <stdio.h>
 #include <string.h>
