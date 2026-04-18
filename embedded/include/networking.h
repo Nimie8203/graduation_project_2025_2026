@@ -21,7 +21,9 @@ enum Commands
     STATUS_LED,
     STATUS_PUMP_1,
     STATUS_PUMP_2,
-    PROFILE
+    PROFILE_CREATE,
+    PROFILE_READ,
+    PROFILE_DELETE,
 };
 
 #define ESP32_SSID "ESP32_AP"
