@@ -8,25 +8,6 @@ static int compare(const void *a, const void *b)
     return (*(int*)a - *(int*)b);
 }
 
-static int read_median(adc1_channel_t channel)
-{
-    int buffer[SAMPLES];
-
-    for (int i = 0; i < SAMPLES; i++)
-    {
-        buffer[i] = adc1_get_raw(channel);
-    }
-
-    qsort(buffer, SAMPLES, sizeof(int), compare);
-
-    return buffer[SAMPLES / 2];
-}
-
-static int compare(const void *a, const void *b)
-{
-    return (*(int*)a - *(int*)b);
-}
-
 static uint16_t read_median(adc1_channel_t channel)
 {
     uint16_t buffer[SAMPLES];

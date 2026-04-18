@@ -15,6 +15,7 @@ void app_main(void)
     init_networking();
     lcd_init();
     init_pumps();
+    init_flow_sensors();
     init_led();
     init_tasks();
     blink_5();
