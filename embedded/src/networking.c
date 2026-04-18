@@ -1,4 +1,6 @@
 #include "networking.h"
+#include "pump.h"
+#include "led.h"
 
 // ─────────────────────────────────────────────
 // ACTIVE PROFILE (single, in-memory)

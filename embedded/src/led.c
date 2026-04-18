@@ -1,4 +1,5 @@
 #include "led.h"
+#include "serial_input.h"
 
 void init_led(void)
 {
@@ -33,7 +34,7 @@ void led_command_indicate(void)
     }
 }
 
-void blink_5_task(void)
+void blink_5(void)
 {
     uint8_t count = 1;
     while (count <= 5)
@@ -46,7 +47,7 @@ void blink_5_task(void)
     }
 }
 
-void blink_n_task(int8_t count)
+void blink_n(int8_t count)
 {
     uint8_t iteration = 1;
     if (count == -1)
