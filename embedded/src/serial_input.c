@@ -36,6 +36,6 @@ void get_serial_input(char *buffer, size_t size)
             }
         }
 
-        delay(50);
+        delay_ms(50);
     }
 }

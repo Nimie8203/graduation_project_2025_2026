@@ -19,6 +19,6 @@ void on_press(){
         }
         
         // Small delay to debounce and reduce CPU usage
-        delay(50);
+        delay_ms(50);
     }
 }

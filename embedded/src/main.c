@@ -13,6 +13,6 @@ void app_main(void)
     {
         read_th(&g_state.humidity, &g_state.temperature);
 
-        delay(2000);
+        delay_ms(2000);
     }
 }
