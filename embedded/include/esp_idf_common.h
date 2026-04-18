@@ -18,21 +18,6 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-// CUSTOM HEADERS
-#include "led.h"
-#include "serial_input.h"
-#include "networking.h"
-#include "button.h"
-#include "lcd.h"
-#include "t_h_sensor.h"
-#include "pump.h"
-#include "flow_sensor.h"
-#include "moisture_sensor.h"
-#include "ldr_sensor.h"
-
-// EXTERNAL LIBRARYS AND DRIVERS
-#include "dht.h"
-
 // STATUS
 typedef struct
 {
@@ -55,7 +40,6 @@ typedef struct
 extern device_status_t g_state;
 
 // PROFILE
-
 #define MAX_NAME_LENGTH 32
 #define MAX_IRRIG_TIME_PER_DAY 24
 
@@ -71,7 +55,6 @@ typedef struct
 } profile_t;
 
 // TAGS FOR DEBUG
-
 extern const char *LED_TAG;
 extern const char *PUMP_TAG;
 extern const char *WIFI_TAG;
