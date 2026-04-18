@@ -38,9 +38,13 @@ typedef struct
 {
     int16_t temperature;
     int16_t humidity;
-    int16_t light_intensity;
-    int16_t flow_sens_1;
-    int16_t flow_sens_2;
+    uint16_t light_intensity;
+    uint32_t flow_sens_1;
+    uint32_t flow_sens_2;
+    int16_t moisture_1;
+    int16_t moisture_2;
+    int16_t moisture_3;
+    int16_t moisture_4;
     bool led_state;
     bool pump_1_state;
     bool pump_2_state;
@@ -52,15 +56,17 @@ extern device_status_t g_state;
 
 // PROFILE
 
+#define MAX_NAME_LENGTH 32
 #define MAX_IRRIG_TIME_PER_DAY 24
 
 typedef struct
 {
-    char *profile_name;
-    char *plant_name;
+    char profile_name[MAX_NAME_LENGTH];
+    char plant_name[MAX_NAME_LENGTH];
     uint8_t irrig_times_per_day;
-    uint16_t times_of_day[MAX_IRRIG_TIME_PER_DAY];
+    uint16_t times_of_day[MAX_IRRIG_TIME_PER_DAY]; // UNIT IS MINUTES FROM MIDNIGHT
     uint16_t water_amount_per_irrig;
+    uint8_t moisture_threshold;
     // COULD ADD MORE CONDITIONAL STUFF LIKE ONLY WATER WHEN TEMP IS ABOVE 0 OR SOMETHING LIKE THAT
 } profile_t;
 
@@ -77,6 +83,6 @@ extern const char *MOIST_TAG;
 extern const char *GENERAL_TAG;
 
 // SHORTCUT FUNCTIONS
-void delay(uint16_t time);
+void delay_ms(uint32_t time);
 
 #endif

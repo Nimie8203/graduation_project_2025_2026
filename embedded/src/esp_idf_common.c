@@ -12,7 +12,7 @@ const char *FLOW_TAG = "FLOW_SENS";
 const char *MOIST_TAG = "MOIST_SENS";
 const char *GENERAL_TAG = "GENERAL";
 
-void delay(uint16_t time)
+void delay_ms(uint32_t time)
 {
     vTaskDelay(time / portTICK_PERIOD_MS);
 }

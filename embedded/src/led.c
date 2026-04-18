@@ -24,11 +24,11 @@ void led_off(void)
 void led_command_indicate(void)
 {
     led_off();
-    delay(500);
+    delay_ms(500);
     for (int8_t i = 1; i <= 5; i++)
     {
         led_on();
-        delay(100);
+        delay_ms(100);
         led_off();
     }
 }
@@ -39,9 +39,9 @@ void blink_5_task(void)
     while (count <= 5)
     {
         led_on();
-        delay(50);
+        delay_ms(50);
         led_off();
-        delay(100);
+        delay_ms(100);
         count++;
     }
 }
@@ -62,9 +62,9 @@ void blink_n_task(int8_t count)
         {
             printf("\n%d\n", iteration);
             led_on();
-            delay(125);
+            delay_ms(125);
             led_off();
-            delay(250);
+            delay_ms(250);
             iteration++;
         }
     }
@@ -74,9 +74,9 @@ void blink_n_task(int8_t count)
         {
             printf("\nDEBUG = %d\n", iteration);
             led_on();
-            delay(125);
+            delay_ms(125);
             led_off();
-            delay(250);
+            delay_ms(250);
             iteration++;
         }
     }
@@ -85,50 +85,50 @@ void blink_n_task(int8_t count)
 void blink_nima(void)
 {
     printf("\nBlinking Nima...\n");
-    delay(1000);
+    delay_ms(1000);
 
     led_on();
-    delay(600);
+    delay_ms(600);
     led_off();
-    delay(200);
+    delay_ms(200);
     led_on();
-    delay(200);
+    delay_ms(200);
     led_off();
 }
 
 void blink_aseel()
 {
     printf("\nBlinking Aseel...\n");
-    delay(1000);
+    delay_ms(1000);
 
     led_on();
-    delay(200);
+    delay_ms(200);
     led_off();
-    delay(200);
+    delay_ms(200);
     led_on();
-    delay(600);
+    delay_ms(600);
     led_off();
 }
 
 void blink_huda()
 {
     printf("\nBlinking Huda...\n");
-    delay(1000);
+    delay_ms(1000);
 
     led_on();
-    delay(200);
+    delay_ms(200);
     led_off();
-    delay(200);
+    delay_ms(200);
     led_on();
-    delay(200);
+    delay_ms(200);
     led_off();
-    delay(200);
+    delay_ms(200);
     led_on();
-    delay(200);
+    delay_ms(200);
     led_off();
-    delay(200);
+    delay_ms(200);
     led_on();
-    delay(200);
+    delay_ms(200);
     led_off();
 }
 
@@ -137,12 +137,12 @@ void blink_wifi(bool is_wifi_on)
     while (is_wifi_on)
     {
         led_on();
-        delay(700);
+        delay_ms(700);
         led_off();
-        delay(100);
+        delay_ms(100);
         led_on();
-        delay(100);
+        delay_ms(100);
         led_off();
-        delay(1000);
+        delay_ms(1000);
     }
 }
