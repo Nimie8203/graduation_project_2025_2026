@@ -13,6 +13,7 @@ void app_main(void)
 {
     ESP_LOGI(GENERAL_TAG, "Initializing Devices");
     init_networking();
+    init_adc1_shared();
     lcd_init();
     init_pumps();
     init_flow_sensors();
@@ -24,7 +25,7 @@ void app_main(void)
 
     while (1)
     {
-        read_th(&g_state.humidity, &g_state.temperature);
+        
 
         delay_ms(2000);
     }

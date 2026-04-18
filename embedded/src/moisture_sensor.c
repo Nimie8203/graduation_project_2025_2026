@@ -1,5 +1,4 @@
 #include "moisture_sensor.h"
-#include "esp_idf_common.h"
 
 #define SAMPLES 5
 
@@ -8,28 +7,40 @@ static int compare(const void *a, const void *b)
     return (*(int*)a - *(int*)b);
 }
 
-static uint16_t read_median(adc1_channel_t channel)
+static adc_channel_t moisture_channels[] = {
+    MOIST_SENS_1_CHANNEL,
+    MOIST_SENS_2_CHANNEL,
+    MOIST_SENS_3_CHANNEL,
+    MOIST_SENS_4_CHANNEL,
+};
+
+static uint16_t read_median(adc_channel_t channel)
 {
-    uint16_t buffer[SAMPLES];
+    int buffer[SAMPLES];
 
     for (int i = 0; i < SAMPLES; i++)
     {
-        buffer[i] = (uint16_t)adc1_get_raw(channel);
+        ESP_ERROR_CHECK(adc_oneshot_read(g_adc1_handle, channel, &buffer[i]));
     }
 
-    qsort(buffer, SAMPLES, sizeof(uint16_t), compare);
+    qsort(buffer, SAMPLES, sizeof(int), compare);
 
-    return buffer[SAMPLES / 2];
+    return (uint16_t)buffer[SAMPLES / 2];
 }
 
 void moisture_init(void)
 {
-    adc1_config_width(ADC_WIDTH_BIT_12);
+    adc_oneshot_chan_cfg_t chan_cfg = {
+        .atten    = ADC_ATTEN_DB_12,
+        .bitwidth = ADC_BITWIDTH_12,
+    };
 
-    adc1_config_channel_atten(MOIST_SENS_1_CHANNEL, ADC_ATTEN_DB_11);
-    adc1_config_channel_atten(MOIST_SENS_2_CHANNEL, ADC_ATTEN_DB_11);
-    adc1_config_channel_atten(MOIST_SENS_3_CHANNEL, ADC_ATTEN_DB_11);
-    adc1_config_channel_atten(MOIST_SENS_4_CHANNEL, ADC_ATTEN_DB_11);
+    for (int i = 0; i < 4; i++)
+    {
+        ESP_ERROR_CHECK(adc_oneshot_config_channel(g_adc1_handle,
+                                                   moisture_channels[i],
+                                                   &chan_cfg));
+    }
 
     gpio_set_direction(MOIST_POWER_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(MOIST_POWER_PIN, 0);
@@ -37,7 +48,6 @@ void moisture_init(void)
 
 void moisture_read_all(void)
 {
-
     gpio_set_level(MOIST_POWER_PIN, 1);
 
     uint16_t m1 = read_median(MOIST_SENS_1_CHANNEL);
