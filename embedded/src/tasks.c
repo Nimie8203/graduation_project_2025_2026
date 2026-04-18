@@ -1,13 +1,16 @@
 #include "tasks.h"
 #include "t_h_sensor.h"
+#include "flow_sensor.h"
 
 static void sensor_task(void *arg)
 {
     while(1) {
         read_th(&g_state.humidity, &g_state.temperature);
+        read_flow_sens();
         delay_ms(2000);
     }
 }
+
 static void irrigation_task(void *arg)
 {
     while(1) {
