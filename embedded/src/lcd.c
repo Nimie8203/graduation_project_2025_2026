@@ -1,16 +1,6 @@
 #include "lcd.h" //Includes your header file function declarations
 
 /* =========================
-   GPIO PIN DEFINITIONS
-   ========================= */
-#define RS  2  //select command
-#define EN  4  //enable signal
-#define D4  16 //data lines (4-bit mode),from d4 to d7
-#define D5  17
-#define D6  18
-#define D7  19
-
-/* =========================
    PRIVATE FUNCTIONS
    ========================= */
 
@@ -25,10 +15,10 @@ static void lcd_enable(void) {
 }
 
 static void lcd_send_nibble(uint8_t data) { //Sends 4 bits only (because LCD is in 4-bit mode)
-    gpio_set_level(D4, (data >> 0) & 1); //Send bit 0 to pin D4
-    gpio_set_level(D5, (data >> 1) & 1); //Send bit 1 to D5
-    gpio_set_level(D6, (data >> 2) & 1); //Send bit 2 to D6
-    gpio_set_level(D7, (data >> 3) & 1); //Send bit 3 to D7
+    gpio_set_level(LCD_D4_PIN, (data >> 0) & 1); //Send bit 0 to pin D4
+    gpio_set_level(LCD_D5_PIN, (data >> 1) & 1); //Send bit 1 to D5
+    gpio_set_level(LCD_D6_PIN, (data >> 2) & 1); //Send bit 2 to D6
+    gpio_set_level(LCD_D7_PIN, (data >> 3) & 1); //Send bit 3 to D7
     lcd_enable();  //Tell LCD to read these bits
 }
 
@@ -38,7 +28,7 @@ static void lcd_send_nibble(uint8_t data) { //Sends 4 bits only (because LCD is 
 
 void lcd_command(uint8_t cmd) { //Sends instruction to LCD
 
-    gpio_set_level(RS, 0); //RS = 0 → command mode
+    gpio_set_level(LCD_RS_PIN, 0); //RS = 0 → command mode
 
     lcd_send_nibble(cmd >> 4); //Send upper 4 bits
     lcd_send_nibble(cmd & 0x0F); //Send lower 4 bits
@@ -48,7 +38,7 @@ void lcd_command(uint8_t cmd) { //Sends instruction to LCD
 
 void lcd_send_data(uint8_t data) { //Sends a character
 
-    gpio_set_level(RS, 1);  //RS = 1 → data mode
+    gpio_set_level(LCD_RS_PIN, 1);  //RS = 1 → data mode
 
     lcd_send_nibble(data >> 4); //Send character in 2 parts line 66 & 67
     lcd_send_nibble(data & 0x0F); 
@@ -62,12 +52,12 @@ void lcd_send_data(uint8_t data) { //Sends a character
 
 void lcd_init(void) {  //Starts LCD
 
-    gpio_set_direction(RS, GPIO_MODE_OUTPUT); //Set all pins as output
+    gpio_set_direction(LCD_RS_PIN, GPIO_MODE_OUTPUT); //Set all pins as output
     gpio_set_direction(LCD_E_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(D4, GPIO_MODE_OUTPUT);
-    gpio_set_direction(D5, GPIO_MODE_OUTPUT);
-    gpio_set_direction(D6, GPIO_MODE_OUTPUT);
-    gpio_set_direction(D7, GPIO_MODE_OUTPUT);
+    gpio_set_direction(LCD_D4_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_direction(LCD_D5_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_direction(LCD_D6_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_direction(LCD_D7_PIN, GPIO_MODE_OUTPUT);
 
     lcd_delay(); //Initial wait
 
