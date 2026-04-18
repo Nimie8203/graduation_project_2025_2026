@@ -1,8 +1,6 @@
 #include "esp_idf_common.h"
 #include "led.h"
-#include "serial_input.h"
 #include "networking.h"
-#include "button.h"
 #include "lcd.h"
 #include "t_h_sensor.h"
 #include "pump.h"
