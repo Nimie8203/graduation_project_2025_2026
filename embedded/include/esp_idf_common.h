@@ -19,13 +19,16 @@
 #include <stdbool.h>
 
 // CUSTOM HEADERS
-#include "blinker_v1.h"
+#include "led.h"
 #include "serial_input.h"
 #include "networking.h"
 #include "button.h"
 #include "lcd.h"
 #include "t_h_sensor.h"
 #include "pump.h"
+#include "flow_sensor.h"
+#include "moisture_sensor.h"
+#include "ldr_sensor.h"
 
 // EXTERNAL LIBRARYS AND DRIVERS
 #include "dht.h"
@@ -36,15 +39,30 @@ typedef struct
     int16_t temperature;
     int16_t humidity;
     int16_t light_intensity;
+    int16_t flow_sens_1;
+    int16_t flow_sens_2;
     bool led_state;
     bool pump_1_state;
     bool pump_2_state;
     bool wifi_state;
-    
+
 } device_status_t;
 
 extern device_status_t g_state;
 
+// PROFILE
+
+#define MAX_IRRIG_TIME_PER_DAY 24
+
+typedef struct
+{
+    char *profile_name;
+    char *plant_name;
+    uint8_t irrig_times_per_day;
+    uint16_t times_of_day[MAX_IRRIG_TIME_PER_DAY];
+    uint16_t water_amount_per_irrig;
+    // COULD ADD MORE CONDITIONAL STUFF LIKE ONLY WATER WHEN TEMP IS ABOVE 0 OR SOMETHING LIKE THAT
+} profile_t;
 
 // TAGS FOR DEBUG
 

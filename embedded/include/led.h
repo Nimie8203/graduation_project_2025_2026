@@ -1,5 +1,5 @@
-#ifndef BLINKER_V1_H
-#define BLINKER_V1_H
+#ifndef LED_H
+#define LED_H
 
 #include "esp_idf_common.h"
 

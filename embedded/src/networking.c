@@ -28,14 +28,12 @@ static cJSON *execute_command(int val)
     {
     case LED_ON:
         led_on();
-        g_state.led_state = 1;
         cJSON_AddStringToObject(root, "status", "ok");
         cJSON_AddStringToObject(root, "msg", "LED turned on");
         break;
 
     case LED_OFF:
         led_off();
-        g_state.led_state = 0;
         cJSON_AddStringToObject(root, "status", "ok");
         cJSON_AddStringToObject(root, "msg", "LED turned off");
         break;
@@ -47,27 +45,23 @@ static cJSON *execute_command(int val)
 
     case PUMP_1_ON:
         pump_on(1);
-        g_state.pump_1_state = true;
         cJSON_AddStringToObject(root, "status", "ok");
         cJSON_AddStringToObject(root, "msg", "Pump 1 turned on");
         break;
 
     case PUMP_1_OFF:
         pump_off(1);
-        g_state.pump_1_state = false;
         cJSON_AddStringToObject(root, "status", "ok");
         cJSON_AddStringToObject(root, "msg", "Pump 1 turned off");
         break;
     case PUMP_2_ON:
         pump_on(2);
-        g_state.pump_2_state = true;
         cJSON_AddStringToObject(root, "status", "ok");
         cJSON_AddStringToObject(root, "msg", "Pump 2 turned on");
         break;
 
     case PUMP_2_OFF:
         pump_off(2);
-        g_state.pump_2_state = false;
         cJSON_AddStringToObject(root, "status", "ok");
         cJSON_AddStringToObject(root, "msg", "Pump 2 turned off");
         break;
@@ -101,29 +95,43 @@ static cJSON *execute_command(int val)
         break;
 
     case STATUS_GENERAL:
+        cJSON_AddStringToObject(root, "status", "ok");
+        cJSON_AddNumberToObject(root, "led", g_state.led_state);
+        cJSON_AddNumberToObject(root, "pump 1", g_state.pump_1_state);
+        cJSON_AddNumberToObject(root, "pump 2", g_state.pump_2_state);
+        cJSON_AddNumberToObject(root, "flow sens 1", g_state.flow_sens_1);
+        cJSON_AddNumberToObject(root, "flow sens 2", g_state.flow_sens_2);
+        cJSON_AddNumberToObject(root, "ligh intensity", g_state.light_intensity);
+        cJSON_AddNumberToObject(root, "temperature", g_state.temperature);
+        cJSON_AddNumberToObject(root, "humidity", g_state.humidity);
+        break;
     case STATUS_LED:
+        cJSON_AddStringToObject(root, "status", "ok");
+        cJSON_AddNumberToObject(root, "led", g_state.led_state);
+        break;
     case STATUS_PUMP_1:
         cJSON_AddStringToObject(root, "status", "ok");
-        cJSON_AddNumberToObject(root, "led", g_state.led_state);
         cJSON_AddNumberToObject(root, "pump", g_state.pump_1_state);
-        cJSON_AddNumberToObject(root, "temperature", g_state.temperature);
-        cJSON_AddNumberToObject(root, "humidity", g_state.humidity);
         break;
-
     case STATUS_PUMP_2:
         cJSON_AddStringToObject(root, "status", "ok");
-        cJSON_AddNumberToObject(root, "led", g_state.led_state);
         cJSON_AddNumberToObject(root, "pump", g_state.pump_2_state);
-        cJSON_AddNumberToObject(root, "temperature", g_state.temperature);
-        cJSON_AddNumberToObject(root, "humidity", g_state.humidity);
         break;
-
-    case PROFILE:
+    case PROFILE_CREATE:
         cJSON_AddStringToObject(root, "status", "ok");
         cJSON_AddStringToObject(root, "device", "ESP32 Plant Monitor");
         cJSON_AddStringToObject(root, "fw_version", "1.0.0");
         break;
-
+    case PROFILE_READ:
+        cJSON_AddStringToObject(root, "status", "ok");
+        cJSON_AddStringToObject(root, "device", "ESP32 Plant Monitor");
+        cJSON_AddStringToObject(root, "fw_version", "1.0.0");
+        break;
+    case PROFILE_DELETE:
+        cJSON_AddStringToObject(root, "status", "ok");
+        cJSON_AddStringToObject(root, "device", "ESP32 Plant Monitor");
+        cJSON_AddStringToObject(root, "fw_version", "1.0.0");
+        break;
     default:
         cJSON_AddStringToObject(root, "status", "error");
         cJSON_AddStringToObject(root, "msg", "Unknown command");
