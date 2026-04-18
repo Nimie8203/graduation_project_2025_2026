@@ -3,7 +3,9 @@
 
 // ESP HEADERS
 #include "driver/gpio.h"
-#include "driver/adc.h"
+#include "esp_adc/adc_oneshot.h"
+#include "esp_adc/adc_cali.h"
+#include "esp_adc/adc_cali_scheme.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_wifi.h"
@@ -15,6 +17,7 @@
 
 // C HEADERS
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
@@ -39,6 +42,7 @@ typedef struct
 } device_status_t;
 
 extern device_status_t g_state;
+extern adc_oneshot_unit_handle_t g_adc1_handle;
 
 // PROFILE
 #define MAX_NAME_LENGTH 32
@@ -68,5 +72,7 @@ extern const char *GENERAL_TAG;
 
 // SHORTCUT FUNCTIONS
 void delay_ms(uint32_t time);
+void init_adc1_shared(void);
+
 
 #endif
