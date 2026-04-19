@@ -11,22 +11,29 @@
 
 void app_main(void)
 {
+    delay_ms(1000);
+    
     ESP_LOGI(GENERAL_TAG, "Initializing Devices");
     init_networking();
-    init_adc1_shared();
+    //init_adc1_shared();
     lcd_init();
-    init_pumps();
-    init_flow_sensors();
+    delay_ms(50);
+    //init_pumps(); 
+    //init_flow_sensors();
     init_led();
     init_tasks();
     blink_5();
     ESP_LOGI(GENERAL_TAG, "BOOTED");
-    lcd_write_string("BOOT COMPLETE!");
+    //lcd_clear();
+    //lcd_write_string("BOOT COMPLETE!\n\r");
+    //lcd_write_char('B');
 
     while (1)
     {
-        
+        pump_on(PUMP_2); 
 
+        delay_ms(2000);
+        pump_off(PUMP_2);
         delay_ms(2000);
     }
 }
