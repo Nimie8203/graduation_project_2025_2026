@@ -10,8 +10,11 @@ static void lcd_delay(void) {  //Small delay so LCD can process data
 
 static void lcd_enable(void) {
     gpio_set_level(LCD_E_PIN, 1);  //Turns EN ON then OFF, this will tell the lcd read the data now
-    lcd_delay();
+    //lcd_delay();
+    delay_ms(2);
     gpio_set_level(LCD_E_PIN, 0);
+    delay_ms(2);
+
 }
 
 static void lcd_send_nibble(uint8_t data) { //Sends 4 bits only (because LCD is in 4-bit mode)
