@@ -62,23 +62,30 @@ void lcd_init(void) {  //Starts LCD
     gpio_set_direction(LCD_D6_PIN, GPIO_MODE_OUTPUT);
     gpio_set_direction(LCD_D7_PIN, GPIO_MODE_OUTPUT);
 
-    delay_ms(50);
+    gpio_set_level(LCD_RS_PIN, 0);
+    gpio_set_level(LCD_E_PIN, 0);
 
-  gpio_set_level(LCD_RS_PIN, 0); //
-  gpio_set_level(LCD_E_PIN, 0); //
-  lcd_send_nibble(0x03); //
-  delay_ms(1);
-  lcd_send_nibble(0x03); //
-  delay_ms(1);
-  lcd_send_nibble(0x03);//
-  delay_ms(1);
+for(int i = 0; i < 50000; i++);   // Wait after power on
 
-lcd_send_nibble(0x02);//
+    // HD44780 reset sequence
+    lcd_send_nibble(0x03);
+    for(int i = 0; i < 20000; i++);
 
-    lcd_command(0x28); //Set 4-bit mode, 2 lines
-    lcd_command(0x0C); //Display ON, cursor OFF
-    lcd_command(0x06); //Auto move cursor right
-    lcd_clear();   // use high-level instead of repeating 0x01 ,,Clear screen
+    lcd_send_nibble(0x03);
+    for(int i = 0; i < 20000; i++);
+
+    lcd_send_nibble(0x03);
+    for(int i = 0; i < 20000; i++);
+
+    lcd_send_nibble(0x02);   // Set 4-bit mode
+
+    lcd_command(0x28); // 4-bit, 2 line, 5x8 font
+    lcd_command(0x0C); // Display ON
+    lcd_command(0x06); // Entry mode
+    lcd_command(0x01); // Clear
+
+    for(int i = 0; i < 20000; i++);
+
 }
 
 /* =========================

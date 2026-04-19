@@ -17,17 +17,15 @@ void app_main(void)
     init_networking();
     //init_adc1_shared();
     lcd_init();
-    delay_ms(50);
-    //init_pumps(); 
-    //init_flow_sensors();
+    lcd_clear();//*
+    lcd_set_cursor(0,0); //*
+    lcd_write_string("BOOT COMPLETE!"); //*
+    init_pumps();
+    init_flow_sensors();
     init_led();
     init_tasks();
     blink_5();
     ESP_LOGI(GENERAL_TAG, "BOOTED");
-    //lcd_clear();
-    //lcd_write_string("BOOT COMPLETE!\n\r");
-    //lcd_write_char('B');
-
     while (1)
     {
         pump_on(PUMP_2); 
