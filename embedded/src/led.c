@@ -12,14 +12,14 @@ void led_on(void)
 {
     gpio_set_level(LED_PIN, 1);
     g_state.led_state = true;
-    ESP_LOGI(LED_TAG, "LED On");
+    //ESP_LOGI(LED_TAG, "LED On");
 }
 
 void led_off(void)
 {
     gpio_set_level(LED_PIN, 0);
     g_state.led_state = false;
-    ESP_LOGI(LED_TAG, "LED Off");
+    //ESP_LOGI(LED_TAG, "LED Off");
 }
 
 void led_command_indicate(void)
@@ -133,17 +133,14 @@ void blink_huda()
     led_off();
 }
 
-void blink_wifi(bool is_wifi_on)
+void blink_wifi()
 {
-    while (is_wifi_on)
-    {
-        led_on();
-        delay_ms(700);
-        led_off();
-        delay_ms(100);
-        led_on();
-        delay_ms(100);
-        led_off();
-        delay_ms(1000);
-    }
+    led_on();
+    delay_ms(700);
+    led_off();
+    delay_ms(100);
+    led_on();
+    delay_ms(100);
+    led_off();
+    delay_ms(1000);
 }
