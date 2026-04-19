@@ -14,6 +14,7 @@
 #include "nvs_flash.h"
 #include "esp_netif.h"
 #include "esp_http_server.h"
+#include "rom/ets_sys.h"
 
 // C HEADERS
 #include <stdio.h>

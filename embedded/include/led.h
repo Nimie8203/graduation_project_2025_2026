@@ -16,6 +16,6 @@ void blink_nima(void);
 void blink_aseel(void);
 void blink_huda(void);
 
-void blink_wifi(bool is_wifi_on);
+void blink_wifi();
 
 #endif

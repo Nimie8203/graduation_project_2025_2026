@@ -372,7 +372,6 @@ static void wifi_event_handler(void *arg, esp_event_base_t base,
     {
         wifi_event_ap_staconnected_t *e = (wifi_event_ap_staconnected_t *)event_data;
         ESP_LOGI(WIFI_TAG, "Client connected, AID=%d", e->aid);
-        g_state.wifi_state = true;
     }
     else if (event_id == WIFI_EVENT_AP_STADISCONNECTED)
     {
@@ -494,4 +493,5 @@ void init_networking(void)
     wifi_init_softap();
     start_webserver();
     ESP_LOGI(WIFI_TAG, "Networking initialized");
+    g_state.wifi_state = true;
 }
