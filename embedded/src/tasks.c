@@ -6,9 +6,9 @@
 
 static void lcd_task(void *arg)
 {
-    lcd_init(); 
-    lcd_set_cursor(0, 0);          
-    lcd_write_string("BOOTED!");
+    lcd_init();
+    lcd_set_cursor(0, 0);
+    lcd_clear();
     vTaskDelete(NULL);
 }
 
