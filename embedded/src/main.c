@@ -15,14 +15,16 @@ void app_main(void)
     init_networking();
     init_adc1_shared();
     lcd_init();
+    lcd_clear();//*
+    lcd_set_cursor(0,0); //*
+    lcd_write_string("BOOT COMPLETE!"); //*
     init_pumps();
     init_flow_sensors();
     init_led();
     init_tasks();
     blink_5();
     ESP_LOGI(GENERAL_TAG, "BOOTED");
-    lcd_write_string("BOOT COMPLETE!");
-
+    
     while (1)
     {
         
