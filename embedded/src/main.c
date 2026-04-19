@@ -22,6 +22,11 @@ void app_main(void)
     init_tasks();
     blink_5();
     ESP_LOGI(GENERAL_TAG, "BOOTED");
+    lcd_write_string("BOOTED!");
+    delay_ms(1500);
+    lcd_clear();
+    delay_ms(500);
+    lcd_write_string("READING SENSORS");
     while (1)
     {
         ESP_LOGI(TEMP_TAG, "%d", g_state.temperature);

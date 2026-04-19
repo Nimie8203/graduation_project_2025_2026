@@ -86,7 +86,6 @@ void lcd_init(void)
     ets_delay_us(2000);   // 2ms for clear
     lcd_command(0x06);
     lcd_command(0x0C);
-    lcd_clear();
 }
 
 /* =========================
