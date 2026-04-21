@@ -1,23 +1,5 @@
 const BASE_URL = 'http://192.168.4.1';
 const DEFAULT_TIMEOUT = 5000; // 5 seconds
-const COMMAND_ENDPOINT = '/command';
-
-export const ESP32_COMMANDS = Object.freeze({
-  LED_ON: 'LED_ON',
-  LED_OFF: 'LED_OFF',
-  PUMP_ON: 'PUMP_ON',
-  PUMP_OFF: 'PUMP_OFF',
-  LED_READ: 'LED_READ',
-  TEMP_READ: 'TEMP_READ',
-  HUMIDITY_READ: 'HUMIDITY_READ',
-  LIGHT_READ: 'LIGHT_READ',
-  MOISTURE_READ: 'MOISTURE_READ',
-  FLOW_READ: 'FLOW_READ',
-  STATUS_GENERAL: 'STATUS_GENERAL',
-  STATUS_LED: 'STATUS_LED',
-  STATUS_PUMP: 'STATUS_PUMP',
-  PROFILE: 'PROFILE',
-});
 
 /**
  * Makes a fetch request with timeout and error handling
@@ -59,38 +41,9 @@ async function fetchWithTimeout(endpoint, options = {}, timeout = DEFAULT_TIMEOU
   }
 }
 
-/**
- * Sends a command payload to ESP32 command endpoint.
- * Expected firmware payload shape:
- * { command: 'TEMP_READ', ...optionalArgs }
- */
-export async function runCommand(command, payload = {}) {
-  if (!command) {
-    throw new Error('Command is required');
-  }
-
-  return fetchWithTimeout(COMMAND_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      command,
-      ...payload,
-    }),
-  });
-}
-
-/**
- * Fetches sensor data from ESP32
- * @returns {Promise<Object>} - Sensor data as JSON
- */
 export async function getSensors() {
-  return fetchWithTimeout('/sensors', {
+  return fetchWithTimeout('/api/status', {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
   });
 }
 
@@ -99,7 +52,7 @@ export async function getSensors() {
  * @returns {Promise<Object>} - Response from ESP32
  */
 export async function startPump() {
-  return runPumpOn();
+  return pump1On();
 }
 
 /**
@@ -107,7 +60,7 @@ export async function startPump() {
  * @returns {Promise<Object>} - Response from ESP32
  */
 export async function stopPump() {
-  return runPumpOff();
+  return pump1Off();
 }
 
 /**
@@ -116,63 +69,62 @@ export async function stopPump() {
  * @returns {Promise<Object>} - Response from ESP32
  */
 export async function sendPlantProfile(profile) {
-  return runProfile(profile);
+  return createProfile(profile);
 }
 
-// Command prototype wrappers
-export async function runLedOn() {
-  return runCommand(ESP32_COMMANDS.LED_ON);
+export async function getStatus() {
+  return fetchWithTimeout('/api/status', { method: 'GET' });
 }
 
-export async function runLedOff() {
-  return runCommand(ESP32_COMMANDS.LED_OFF);
+export async function setLed(on) {
+  return fetchWithTimeout('/api/led', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ state: on ? 'on' : 'off' }),
+  });
 }
 
-export async function runPumpOn() {
-  return runCommand(ESP32_COMMANDS.PUMP_ON);
+export const ledOn = () => setLed(true);
+export const ledOff = () => setLed(false);
+
+export async function setPump(pumpNum, on) {
+  if (pumpNum !== 1 && pumpNum !== 2) {
+    throw new Error('pumpNum must be 1 or 2');
+  }
+
+  return fetchWithTimeout('/api/pump', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pump: pumpNum, state: on ? 'on' : 'off' }),
+  });
 }
 
-export async function runPumpOff() {
-  return runCommand(ESP32_COMMANDS.PUMP_OFF);
+export const pump1On = () => setPump(1, true);
+export const pump1Off = () => setPump(1, false);
+export const pump2On = () => setPump(2, true);
+export const pump2Off = () => setPump(2, false);
+
+export async function createProfile(profile) {
+  return fetchWithTimeout('/api/profile', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(profile),
+  });
 }
 
-export async function runLedRead() {
-  return runCommand(ESP32_COMMANDS.LED_READ);
+export async function getProfile() {
+  return fetchWithTimeout('/api/profile', { method: 'GET' });
 }
 
-export async function runTempRead() {
-  return runCommand(ESP32_COMMANDS.TEMP_READ);
+export async function deleteProfile() {
+  return fetchWithTimeout('/api/profile', { method: 'DELETE' });
 }
 
-export async function runHumidityRead() {
-  return runCommand(ESP32_COMMANDS.HUMIDITY_READ);
-}
-
-export async function runLightRead() {
-  return runCommand(ESP32_COMMANDS.LIGHT_READ);
-}
-
-export async function runMoistureRead() {
-  return runCommand(ESP32_COMMANDS.MOISTURE_READ);
-}
-
-export async function runFlowRead() {
-  return runCommand(ESP32_COMMANDS.FLOW_READ);
-}
-
-export async function runStatusGeneral() {
-  return runCommand(ESP32_COMMANDS.STATUS_GENERAL);
-}
-
-export async function runStatusLed() {
-  return runCommand(ESP32_COMMANDS.STATUS_LED);
-}
-
-export async function runStatusPump() {
-  return runCommand(ESP32_COMMANDS.STATUS_PUMP);
-}
-
-export async function runProfile(profile = {}) {
-  return runCommand(ESP32_COMMANDS.PROFILE, { profile });
-}
+// Backward-compatible aliases used by current pages.
+export async function runLedOn() { return ledOn(); }
+export async function runLedOff() { return ledOff(); }
+export async function runPumpOn() { return pump1On(); }
+export async function runPumpOff() { return pump1Off(); }
+export async function runStatusGeneral() { return getStatus(); }
+export async function runProfile(profile = {}) { return createProfile(profile); }
 
