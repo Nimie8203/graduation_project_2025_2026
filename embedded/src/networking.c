@@ -1,6 +1,5 @@
 #include "networking.h"
-#include "pump.h"
-#include "led.h"
+
 
 // ─────────────────────────────────────────────
 // ACTIVE PROFILE (single, in-memory)
@@ -137,13 +136,7 @@ esp_err_t pump_handler(httpd_req_t *req)
     cJSON *j_source = cJSON_GetObjectItem(json, "source");
     cJSON *j_state  = cJSON_GetObjectItem(json, "state");
 
-    if (!cJSON_IsString(j_state))
-    {
-        cJSON_Delete(json);
-        send_error(req, "Missing field: state (string)");
-        return ESP_FAIL;
-    }
-
+    // Resolve pump number first
     int pump_num = 0;
 
     if (cJSON_IsNumber(j_pump))
@@ -170,6 +163,7 @@ esp_err_t pump_handler(httpd_req_t *req)
         return ESP_FAIL;
     }
 
+    // Validate pump number
     if (pump_num != 1 && pump_num != 2)
     {
         cJSON_Delete(json);
@@ -177,14 +171,24 @@ esp_err_t pump_handler(httpd_req_t *req)
         return ESP_FAIL;
     }
 
+    // Validate state field
+    if (!cJSON_IsString(j_state))
+    {
+        cJSON_Delete(json);
+        send_error(req, "Missing field: state (string)");
+        return ESP_FAIL;
+    }
+
+    // Copy state string before deleting json
     bool turn_on = (strcmp(j_state->valuestring, "on") == 0);
+    cJSON_Delete(json); // safe — no more access to j_* after this
+
+    PUMP pump = (pump_num == 1) ? PUMP_1 : PUMP_2;
 
     if (turn_on)
-        pump_on((PUMP)pump_num);
+        pump_on(pump);
     else
-        pump_off((PUMP)pump_num);
-
-    cJSON_Delete(json);
+        pump_off(pump);
 
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "status", "ok");
@@ -415,6 +419,7 @@ static httpd_handle_t start_webserver(void)
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = 80;
     config.max_uri_handlers = 20;
+    config.stack_size = 8192;
 
     httpd_handle_t server = NULL;
     if (httpd_start(&server, &config) != ESP_OK)
@@ -529,6 +534,7 @@ void init_networking(void)
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     wifi_init_softap();
+    delay_ms(100);
     start_webserver();
     ESP_LOGI(WIFI_TAG, "Networking initialized");
     g_state.wifi_state = true;

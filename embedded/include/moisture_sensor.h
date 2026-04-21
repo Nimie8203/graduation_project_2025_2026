@@ -3,7 +3,7 @@
 
 #include "esp_idf_common.h"
 
-#define MOIST_POWER_PIN 18 // PROBLEM
+#define MOIST_POWER_PIN 19 // PROBLEM
 
 #define MOIST_SENS_1_CHANNEL ADC_CHANNEL_5
 #define MOIST_SENS_2_CHANNEL ADC_CHANNEL_4
