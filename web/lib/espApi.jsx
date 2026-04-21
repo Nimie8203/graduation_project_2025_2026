@@ -99,6 +99,9 @@ export async function setPump(pumpNum, on) {
   });
 }
 
+export const pumpOn = (pumpNum) => setPump(pumpNum, true);
+export const pumpOff = (pumpNum) => setPump(pumpNum, false);
+
 export const pump1On = () => setPump(1, true);
 export const pump1Off = () => setPump(1, false);
 export const pump2On = () => setPump(2, true);
