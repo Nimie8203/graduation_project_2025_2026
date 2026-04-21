@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 
 const ESP32_BASE_URL = 'http://192.168.4.1';
-const PING_INTERVAL = 3000; // Ping every 3 seconds
-const PING_TIMEOUT = 2000; // 2 second timeout for ping
+const PING_INTERVAL = 10000; // Ping every 3 seconds
+const PING_TIMEOUT = 9000; // 2 second timeout for ping
 const PING_ENDPOINT = '/api/status'; // Adjust this endpoint based on your ESP32 API
 
 /**
@@ -27,9 +27,6 @@ export function useEspConnection(interval = PING_INTERVAL) {
       const response = await fetch(`${ESP32_BASE_URL}${PING_ENDPOINT}`, {
         method: 'GET',
         signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
 
       clearTimeout(timeoutId);
