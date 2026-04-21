@@ -1,61 +1,41 @@
 'use client';
 
 import { useState } from 'react';
-import { startPump, stopPump } from '@/lib/espApi';
+import { pumpOn, pumpOff } from '@/lib/espApi';
 import { useEspConnection } from '@/lib/useEspConnection';
 
 export default function ManualControl() {
   const { isConnected } = useEspConnection();
-  const [loading, setLoading] = useState(false);
+  const [loadingKey, setLoadingKey] = useState(null);
   const [message, setMessage] = useState({ type: null, text: '' });
 
-  const handleStartPump = async () => {
+  const handlePumpAction = async (pumpNum, turnOn) => {
     if (!isConnected) {
       setMessage({ type: 'error', text: 'ESP32 is not connected' });
       return;
     }
 
-    setLoading(true);
+    const key = `${pumpNum}-${turnOn ? 'on' : 'off'}`;
+    setLoadingKey(key);
     setMessage({ type: null, text: '' });
 
     try {
-      const response = await startPump();
+      if (turnOn) {
+        await pumpOn(pumpNum);
+      } else {
+        await pumpOff(pumpNum);
+      }
       setMessage({
         type: 'success',
-        text: 'Pump started successfully',
+        text: `Pump ${pumpNum} ${turnOn ? 'started' : 'stopped'} successfully`,
       });
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error.message || 'Failed to start pump',
+        text: error.message || `Failed to ${turnOn ? 'start' : 'stop'} Pump ${pumpNum}`,
       });
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStopPump = async () => {
-    if (!isConnected) {
-      setMessage({ type: 'error', text: 'ESP32 is not connected' });
-      return;
-    }
-
-    setLoading(true);
-    setMessage({ type: null, text: '' });
-
-    try {
-      const response = await stopPump();
-      setMessage({
-        type: 'success',
-        text: 'Pump stopped successfully',
-      });
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error.message || 'Failed to stop pump',
-      });
-    } finally {
-      setLoading(false);
+      setLoadingKey(null);
     }
   };
 
@@ -102,51 +82,63 @@ export default function ManualControl() {
         {/* Control Panel */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 border border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Pump Control</h2>
-          
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={handleStartPump}
-              disabled={!isConnected || loading}
-              className={`flex-1 px-6 py-4 rounded-lg font-semibold text-white transition-all ${
-                !isConnected || loading
-                  ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
-                  : 'bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 active:bg-green-800 dark:active:bg-green-700 shadow-md hover:shadow-lg'
-              }`}
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-                  Processing...
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <span>🚰</span>
-                  Start Pump
-                </span>
-              )}
-            </button>
 
-            <button
-              onClick={handleStopPump}
-              disabled={!isConnected || loading}
-              className={`flex-1 px-6 py-4 rounded-lg font-semibold text-white transition-all ${
-                !isConnected || loading
-                  ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
-                  : 'bg-red-600 dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600 active:bg-red-800 dark:active:bg-red-700 shadow-md hover:shadow-lg'
-              }`}
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-                  Processing...
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <span>⏹️</span>
-                  Stop Pump
-                </span>
-              )}
-            </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[1, 2].map((pumpNum) => (
+              <div
+                key={pumpNum}
+                className="rounded-lg border border-gray-200 dark:border-gray-700 p-4"
+              >
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                  Pump {pumpNum}
+                </h3>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <button
+                    onClick={() => handlePumpAction(pumpNum, true)}
+                    disabled={!isConnected || loadingKey !== null}
+                    className={`flex-1 px-6 py-4 rounded-lg font-semibold text-white transition-all ${
+                      !isConnected || loadingKey !== null
+                        ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+                        : 'bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 active:bg-green-800 dark:active:bg-green-700 shadow-md hover:shadow-lg'
+                    }`}
+                  >
+                    {loadingKey === `${pumpNum}-on` ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+                        Processing...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <span>🚰</span>
+                        Start Pump {pumpNum}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => handlePumpAction(pumpNum, false)}
+                    disabled={!isConnected || loadingKey !== null}
+                    className={`flex-1 px-6 py-4 rounded-lg font-semibold text-white transition-all ${
+                      !isConnected || loadingKey !== null
+                        ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+                        : 'bg-red-600 dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600 active:bg-red-800 dark:active:bg-red-700 shadow-md hover:shadow-lg'
+                    }`}
+                  >
+                    {loadingKey === `${pumpNum}-off` ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+                        Processing...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <span>⏹️</span>
+                        Stop Pump {pumpNum}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
