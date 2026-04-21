@@ -2,12 +2,11 @@
 #define NETWORKING_H
 
 #include "esp_idf_common.h"
+#include "cJSON.h"
 
-void give_command(int val);
-esp_err_t api_cmd_handler(httpd_req_t *req);
-httpd_handle_t start_webserver(void);
-void wifi_init_softap(void);
+#define ESP32_SSID "ESP32_AP"
+#define ESP32_PASS "82138213"
+
 void init_networking(void);
-
 
 #endif
