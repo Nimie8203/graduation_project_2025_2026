@@ -39,9 +39,6 @@ void app_main(void)
         ESP_LOGI(MOIST_TAG, "%d", g_state.moisture_3);
         ESP_LOGI(MOIST_TAG, "%d", g_state.moisture_4);
         ESP_LOGI(GENERAL_TAG, "++++++++++++++");
-        pump_on(PUMP_2);
         delay_ms(3000);
-        pump_off(PUMP_2);
-        delay_ms(1000);
     }
 }

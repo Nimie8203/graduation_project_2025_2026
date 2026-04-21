@@ -110,7 +110,9 @@ esp_err_t status_handler(httpd_req_t *req)
 
 // ─────────────────────────────────────────────
 // POST /api/pump
-// Body: {"pump": 1, "state": "on"} or {"pump": 2, "state": "off"}
+// Body: {"pump": 1, "state": "on"}            <- explicit pump number
+//       {"source": "web",    "state": "on"}   <- web    → pump 1
+//       {"source": "mobile", "state": "on"}   <- mobile → pump 2
 // ─────────────────────────────────────────────
 
 esp_err_t pump_handler(httpd_req_t *req)
@@ -131,19 +133,42 @@ esp_err_t pump_handler(httpd_req_t *req)
         return ESP_FAIL;
     }
 
-    cJSON *j_pump  = cJSON_GetObjectItem(json, "pump");
-    cJSON *j_state = cJSON_GetObjectItem(json, "state");
+    cJSON *j_pump   = cJSON_GetObjectItem(json, "pump");
+    cJSON *j_source = cJSON_GetObjectItem(json, "source");
+    cJSON *j_state  = cJSON_GetObjectItem(json, "state");
 
-    if (!cJSON_IsNumber(j_pump) || !cJSON_IsString(j_state))
+    if (!cJSON_IsString(j_state))
     {
         cJSON_Delete(json);
-        send_error(req, "Missing or invalid fields: pump (int), state (string)");
+        send_error(req, "Missing field: state (string)");
         return ESP_FAIL;
     }
 
-    int pump_num       = j_pump->valueint;
-    const char *state  = j_state->valuestring;
-    bool turn_on       = (strcmp(state, "on") == 0);
+    int pump_num = 0;
+
+    if (cJSON_IsNumber(j_pump))
+    {
+        pump_num = j_pump->valueint;
+    }
+    else if (cJSON_IsString(j_source))
+    {
+        if (strcmp(j_source->valuestring, "web") == 0)
+            pump_num = 1;
+        else if (strcmp(j_source->valuestring, "mobile") == 0)
+            pump_num = 2;
+        else
+        {
+            cJSON_Delete(json);
+            send_error(req, "Unknown source, use 'web' or 'mobile'");
+            return ESP_FAIL;
+        }
+    }
+    else
+    {
+        cJSON_Delete(json);
+        send_error(req, "Provide either 'pump' (int) or 'source' (string)");
+        return ESP_FAIL;
+    }
 
     if (pump_num != 1 && pump_num != 2)
     {
@@ -151,6 +176,8 @@ esp_err_t pump_handler(httpd_req_t *req)
         send_error(req, "pump must be 1 or 2");
         return ESP_FAIL;
     }
+
+    bool turn_on = (strcmp(j_state->valuestring, "on") == 0);
 
     if (turn_on)
         pump_on((PUMP)pump_num);
@@ -291,7 +318,7 @@ esp_err_t profile_create_handler(httpd_req_t *req)
     for (int i = 0; i < irrig_times; i++)
     {
         cJSON *item = cJSON_GetArrayItem(j_tod, i);
-        s_profile.times_of_day[i] = (uint16_t)item->valueint; // minutes since midnight
+        s_profile.times_of_day[i] = (uint16_t)item->valueint;
     }
 
     s_profile_active = true;
@@ -308,7 +335,7 @@ esp_err_t profile_create_handler(httpd_req_t *req)
 
 // ─────────────────────────────────────────────
 // GET /api/profile
-// Returns the active profile, or 404 if none exists.
+// Returns the active profile, or error if none exists.
 // ─────────────────────────────────────────────
 
 esp_err_t profile_read_handler(httpd_req_t *req)
@@ -387,7 +414,7 @@ static httpd_handle_t start_webserver(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = 80;
-    config.max_uri_handlers = 16;
+    config.max_uri_handlers = 20;
 
     httpd_handle_t server = NULL;
     if (httpd_start(&server, &config) != ESP_OK)
@@ -396,9 +423,18 @@ static httpd_handle_t start_webserver(void)
         return NULL;
     }
 
-    // Preflight (OPTIONS) — must be registered before specific routes
-    httpd_uri_t uri_options = {
-        .uri = "/api/*", .method = HTTP_OPTIONS, .handler = options_handler
+    // Preflight (OPTIONS) — one per route to avoid wildcard matching issues
+    httpd_uri_t uri_options_status = {
+        .uri = "/api/status", .method = HTTP_OPTIONS, .handler = options_handler
+    };
+    httpd_uri_t uri_options_pump = {
+        .uri = "/api/pump", .method = HTTP_OPTIONS, .handler = options_handler
+    };
+    httpd_uri_t uri_options_led = {
+        .uri = "/api/led", .method = HTTP_OPTIONS, .handler = options_handler
+    };
+    httpd_uri_t uri_options_profile = {
+        .uri = "/api/profile", .method = HTTP_OPTIONS, .handler = options_handler
     };
 
     // GET /api/status — all sensor data and device states
@@ -431,7 +467,10 @@ static httpd_handle_t start_webserver(void)
         .uri = "/api/profile", .method = HTTP_DELETE, .handler = profile_delete_handler
     };
 
-    httpd_register_uri_handler(server, &uri_options);
+    httpd_register_uri_handler(server, &uri_options_status);
+    httpd_register_uri_handler(server, &uri_options_pump);
+    httpd_register_uri_handler(server, &uri_options_led);
+    httpd_register_uri_handler(server, &uri_options_profile);
     httpd_register_uri_handler(server, &uri_status);
     httpd_register_uri_handler(server, &uri_pump);
     httpd_register_uri_handler(server, &uri_led);
