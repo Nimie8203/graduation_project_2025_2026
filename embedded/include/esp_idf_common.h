@@ -39,6 +39,8 @@ typedef struct
     bool pump_1_state;
     bool pump_2_state;
     bool wifi_state;
+    bool tank_state;
+    bool pipe_state;
 
 } device_status_t;
 
@@ -69,6 +71,8 @@ extern const char *HUM_TAG;
 extern const char *LDR_TAG;
 extern const char *FLOW_TAG;
 extern const char *MOIST_TAG;
+extern const char *TANK_TAG;
+extern const char *PIPE_TAG;
 extern const char *GENERAL_TAG;
 
 // SHORTCUT FUNCTIONS

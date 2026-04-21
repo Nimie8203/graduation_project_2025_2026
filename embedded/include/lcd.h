@@ -8,8 +8,8 @@
 #define LCD_E_PIN 27 // PROBLEM
 #define LCD_D4_PIN 26
 #define LCD_D5_PIN 25
-#define LCD_D6_PIN 33
-#define LCD_D7_PIN 32
+#define LCD_D6_PIN 21
+#define LCD_D7_PIN 19
 
 
 /* 1. Initialization */

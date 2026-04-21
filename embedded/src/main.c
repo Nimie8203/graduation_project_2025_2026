@@ -11,22 +11,29 @@
 
 void app_main(void)
 {
-    delay_ms(1000);
+    delay_ms(2000);
     
     ESP_LOGI(GENERAL_TAG, "Initializing Devices");
-    init_networking();
-    init_adc1_shared();
-    init_pumps();
-    init_flow_sensors();
+    delay_ms(500);
     init_led();
+    delay_ms(500);
+    init_networking();
+    delay_ms(500);
+    init_adc1_shared();
+    delay_ms(500);
+    init_pumps();
+    delay_ms(500);
+    init_flow_sensors();
+    delay_ms(500);
     init_tasks();
+    
     blink_5();
     ESP_LOGI(GENERAL_TAG, "BOOTED");
     lcd_write_string("BOOTED!");
-    delay_ms(1500);
+    delay_ms(2000);
     lcd_clear();
-    delay_ms(500);
-    lcd_write_string("READING SENSORS");
+    delay_ms(1000);
+    lcd_write_string("READING STATES...");
     while (1)
     {
         ESP_LOGI(TEMP_TAG, "%d", g_state.temperature);
@@ -38,6 +45,10 @@ void app_main(void)
         ESP_LOGI(MOIST_TAG, "%d", g_state.moisture_2);
         ESP_LOGI(MOIST_TAG, "%d", g_state.moisture_3);
         ESP_LOGI(MOIST_TAG, "%d", g_state.moisture_4);
+        ESP_LOGI(PUMP_TAG, "%d", g_state.pump_1_state);
+        ESP_LOGI(PUMP_TAG, "%d", g_state.pump_2_state);
+        ESP_LOGI(TANK_TAG, "%d", g_state.tank_state);
+        ESP_LOGI(PIPE_TAG, "%d", g_state.pipe_state);
         ESP_LOGI(GENERAL_TAG, "++++++++++++++");
         delay_ms(3000);
     }

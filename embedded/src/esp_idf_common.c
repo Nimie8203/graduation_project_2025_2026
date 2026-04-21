@@ -10,6 +10,8 @@ const char *HUM_TAG = "DHT_HUM";
 const char *LDR_TAG = "LDR_SENS";
 const char *FLOW_TAG = "FLOW_SENS";
 const char *MOIST_TAG = "MOIST_SENS";
+const char *TANK_TAG = "TANK";
+const char *PIPE_TAG = "PIPE";
 const char *GENERAL_TAG = "GENERAL";
 
 adc_oneshot_unit_handle_t g_adc1_handle = NULL;
