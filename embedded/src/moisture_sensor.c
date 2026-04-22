@@ -28,7 +28,7 @@ static uint16_t read_median(adc_channel_t channel)
     return (uint16_t)buffer[SAMPLES / 2];
 }
 
-void moisture_init(void)
+void init_moisture(void)
 {
     adc_oneshot_chan_cfg_t chan_cfg = {
         .atten    = ADC_ATTEN_DB_12,
@@ -42,23 +42,31 @@ void moisture_init(void)
                                                    &chan_cfg));
     }
 
-    gpio_set_direction(MOIST_POWER_PIN, GPIO_MODE_OUTPUT);
+    gpio_config_t io_conf = {
+        .pin_bit_mask = (1ULL << MOIST_POWER_PIN),
+        .mode         = GPIO_MODE_OUTPUT,
+        .pull_up_en   = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type    = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&io_conf);
     gpio_set_level(MOIST_POWER_PIN, 0);
 }
 
-void moisture_read_all(void)
+void read_moisture(void)
 {
     gpio_set_level(MOIST_POWER_PIN, 1);
+    delay_ms(3000);
 
     uint16_t m1 = read_median(MOIST_SENS_1_CHANNEL);
     uint16_t m2 = read_median(MOIST_SENS_2_CHANNEL);
     uint16_t m3 = read_median(MOIST_SENS_3_CHANNEL);
     uint16_t m4 = read_median(MOIST_SENS_4_CHANNEL);
 
-    g_state.moisture_1 = (m1 * 100) / 4096;
-    g_state.moisture_2 = (m2 * 100) / 4096;
-    g_state.moisture_3 = (m3 * 100) / 4096;
-    g_state.moisture_4 = (m4 * 100) / 4096;
+    g_state.moisture_1 = 100 - ((m1 * 100) / 4096);
+    g_state.moisture_2 = 100 - ((m2 * 100) / 4096);
+    g_state.moisture_3 = 100 - ((m3 * 100) / 4096);
+    g_state.moisture_4 = 100 - ((m4 * 100) / 4096);
 
     gpio_set_level(MOIST_POWER_PIN, 0);
 }

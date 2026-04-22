@@ -21,10 +21,15 @@ void app_main(void)
     delay_ms(500);
     init_adc1_shared();
     delay_ms(500);
+    init_ldr();
+    delay_ms(500);
+    init_moisture();
+    delay_ms(500);
     init_pumps();
     delay_ms(500);
     init_flow_sensors();
     delay_ms(500);
+    
     init_tasks();
     
     blink_5();
@@ -34,6 +39,20 @@ void app_main(void)
     lcd_clear();
     delay_ms(1000);
     lcd_write_string("READING STATES...");
+
+    g_state.flow_sens_1 = 0;
+    g_state.flow_sens_2 = 0;
+    g_state.pump_1_state = 0;
+    g_state.pump_2_state = 0;
+    g_state.temperature = 0;
+    g_state.humidity = 0;
+    g_state.moisture_1 = 0;
+    g_state.moisture_2 = 0;
+    g_state.moisture_3 = 0;
+    g_state.moisture_4 = 0;
+    g_state.light_intensity = 0;
+
+
     while (1)
     {
         ESP_LOGI(TEMP_TAG, "%d", g_state.temperature);
