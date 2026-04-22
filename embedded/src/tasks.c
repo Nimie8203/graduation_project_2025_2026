@@ -16,10 +16,10 @@ static void state_task(void *arg)
         read_flow_sens();
         read_tank();
         read_pipe();
-        ldr_read();
-        moisture_read_all();
+        read_ldr();
+        read_moisture4();
         
-        delay_ms(2000);
+        delay_ms(3000);
     }
 }
 
