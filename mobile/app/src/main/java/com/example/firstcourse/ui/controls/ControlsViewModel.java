@@ -3,6 +3,7 @@ package com.example.firstcourse.ui.controls;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.firstcourse.data.model.ApiResult;
 import com.example.firstcourse.data.model.IrrigationResponse;
 import com.example.firstcourse.data.repository.DeviceRepository;
 
@@ -26,7 +27,7 @@ public class ControlsViewModel extends ViewModel {
      * to know when the operation is complete and whether it was successful.
      * @return A LiveData object containing the IrrigationResponse from the server.
      */
-    public LiveData<IrrigationResponse> irrigateNow() {
+    public LiveData<ApiResult<IrrigationResponse>> irrigateNow() {
         return repository.irrigateNow();
     }
 

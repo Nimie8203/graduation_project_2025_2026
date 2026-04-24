@@ -14,6 +14,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.firstcourse.data.model.ApiResult;
 import com.example.firstcourse.ui.dashboard.DashboardViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -40,12 +41,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Observe LiveData from ViewModel
-        dashboardViewModel.getDeviceStatus().observe(this, deviceStatus -> {
-            if (deviceStatus != null) {
-                updateDashboard(deviceStatus);
+        dashboardViewModel.getDeviceStatus().observe(this, result -> {
+            if (result != null && result.isSuccess() && result.getData() != null) {
+                updateDashboard(result.getData());
             } else {
-                // Show an error message to the user
-                Snackbar.make(findViewById(R.id.main), "Failed to load device status.", Snackbar.LENGTH_LONG).show();
+                String message = result != null ? result.getMessage() : "Failed to load device status.";
+                Snackbar.make(findViewById(R.id.main), message, Snackbar.LENGTH_LONG).show();
             }
         });
 

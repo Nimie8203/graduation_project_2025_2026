@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.firstcourse.data.model.ApiResult;
 import com.example.firstcourse.data.model.IrrigationProfile;
 import com.example.firstcourse.ui.profiles.ProfileAdapter;
 import com.example.firstcourse.ui.profiles.ProfileViewModel;
@@ -40,9 +41,11 @@ public class ProfileActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
 
         // Observe profile list changes
-        viewModel.getProfilesLiveData().observe(this, profiles -> {
-            if (profiles != null) {
-                adapter.setProfiles(profiles);
+        viewModel.getProfilesLiveData().observe(this, result -> {
+            if (result != null && result.isSuccess() && result.getData() != null) {
+                adapter.setProfiles(result.getData());
+            } else if (result != null && result.getMessage() != null) {
+                Toast.makeText(this, result.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -92,24 +95,28 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void createProfile(IrrigationProfile profile) {
-        viewModel.createProfile(profile).observe(this, createdProfile -> {
-            if (createdProfile != null) {
+        viewModel.createProfile(profile).observe(this, result -> {
+            if (result != null && result.isSuccess() && result.getData() != null) {
+                IrrigationProfile createdProfile = result.getData();
                 // In a real app, you would refresh the list from the server.
                 // Here, we just show a toast for confirmation.
-                String result = String.format(Locale.getDefault(),
+                String successText = String.format(Locale.getDefault(),
                         "Profile was init with: %d times per day, at %s times, a %.2f water amount, with %s name.",
                         createdProfile.getTimesPerDay(),
                         createdProfile.getTimesOfDay().toString(),
                         (double) createdProfile.getWaterAmount(),
                         createdProfile.getPlantName());
 
-                Toast.makeText(this, result, Toast.LENGTH_LONG).show();
+                Toast.makeText(this, successText, Toast.LENGTH_LONG).show();
 
-                // To refresh the list, you might re-fetch or add to the current list
-                viewModel.getProfilesLiveData().observe(this, profiles -> adapter.setProfiles(profiles));
-
+                viewModel.refreshProfiles().observe(this, profilesResult -> {
+                    if (profilesResult != null && profilesResult.isSuccess() && profilesResult.getData() != null) {
+                        adapter.setProfiles(profilesResult.getData());
+                    }
+                });
             } else {
-                Toast.makeText(this, "Failed to create profile.", Toast.LENGTH_SHORT).show();
+                String message = result != null ? result.getMessage() : "Profile could not be created.";
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
             }
         });
     }

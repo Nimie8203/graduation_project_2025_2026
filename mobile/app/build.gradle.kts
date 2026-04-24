@@ -41,6 +41,7 @@ dependencies {
     // Retrofit for network requests
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
 
     // ViewModel for MVVM architecture
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.3")

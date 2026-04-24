@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.firstcourse.data.model.ApiResult;
 import com.example.firstcourse.ui.controls.ControlsViewModel;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.snackbar.Snackbar;
@@ -34,15 +35,16 @@ public class ControlsActivity extends AppCompatActivity {
             irrigateNowButton.setEnabled(false);
             irrigateNowButton.setText("Irrigating...");
 
-            controlsViewModel.irrigateNow().observe(this, response -> {
+            controlsViewModel.irrigateNow().observe(this, result -> {
                 // Re-enable the button
                 irrigateNowButton.setEnabled(true);
                 irrigateNowButton.setText("Irrigate Now");
 
-                if (response != null) {
-                    Snackbar.make(findViewById(R.id.controls_root), response.getMessage(), Snackbar.LENGTH_LONG).show();
+                if (result != null && result.isSuccess() && result.getData() != null) {
+                    Snackbar.make(findViewById(R.id.controls_root), result.getData().getMessage(), Snackbar.LENGTH_LONG).show();
                 } else {
-                    Snackbar.make(findViewById(R.id.controls_root), "Irrigation request failed.", Snackbar.LENGTH_LONG).show();
+                    String message = result != null ? result.getMessage() : "Irrigation request failed.";
+                    Snackbar.make(findViewById(R.id.controls_root), message, Snackbar.LENGTH_LONG).show();
                 }
             });
         });
