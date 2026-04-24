@@ -1,6 +1,7 @@
 package com.example.firstcourse.ui.profiles;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.firstcourse.data.model.ApiResult;
@@ -16,7 +17,8 @@ import java.util.List;
 public class ProfileViewModel extends ViewModel {
 
     private final DeviceRepository repository;
-    private LiveData<ApiResult<List<IrrigationProfile>>> profilesLiveData;
+    private final MediatorLiveData<ApiResult<List<IrrigationProfile>>> profilesLiveData = new MediatorLiveData<>();
+    private LiveData<ApiResult<List<IrrigationProfile>>> currentSource;
 
     public ProfileViewModel() {
         this.repository = DeviceRepository.getInstance();
@@ -36,7 +38,11 @@ public class ProfileViewModel extends ViewModel {
      * @return LiveData containing the latest list of profiles.
      */
     public LiveData<ApiResult<List<IrrigationProfile>>> refreshProfiles() {
-        profilesLiveData = repository.getIrrigationProfiles();
+        if (currentSource != null) {
+            profilesLiveData.removeSource(currentSource);
+        }
+        currentSource = repository.getIrrigationProfiles();
+        profilesLiveData.addSource(currentSource, profilesLiveData::setValue);
         return profilesLiveData;
     }
 

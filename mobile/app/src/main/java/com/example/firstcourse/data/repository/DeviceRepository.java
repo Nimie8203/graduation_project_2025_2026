@@ -69,6 +69,15 @@ public class DeviceRepository {
             enqueueCommand(STATUS_GENERAL, new CommandHandler() {
                 @Override
                 public void onSuccess(String body) {
+                    if (!hasStructuredDeviceStatusFields(body)) {
+                        data.setValue(ApiResult.error(
+                                isAckOnlyResponse(body)
+                                        ? "ESP32 returned acknowledgement only. Structured device status is not exposed yet."
+                                        : "Device status could not be parsed: " + safeBody(body),
+                                ApiResult.FailureReason.PARSE_ERROR));
+                        return;
+                    }
+
                     DeviceStatus status = parseDeviceStatus(body);
                     data.setValue(ApiResult.success(status, "Device status updated."));
                 }
@@ -491,10 +500,10 @@ public class DeviceRepository {
 
     private Boolean parseBoolean(String body) {
         String normalized = safeBody(body).toLowerCase(Locale.ROOT);
-        if (normalized.contains("on") || normalized.contains("true") || normalized.contains("1")) {
+        if (normalized.matches(".*\\b(on|true|1)\\b.*")) {
             return true;
         }
-        if (normalized.contains("off") || normalized.contains("false") || normalized.contains("0")) {
+        if (normalized.matches(".*\\b(off|false|0)\\b.*")) {
             return false;
         }
         return null;
@@ -510,6 +519,14 @@ public class DeviceRepository {
                 || normalized.contains("device confirmation")
                 || normalized.contains("success")
                 || normalized.contains("done");
+    }
+
+    private boolean hasStructuredDeviceStatusFields(String body) {
+        return parseDouble(body, "soil_moisture", "moisture") != null
+                || parseDouble(body, "temperature", "temp") != null
+                || parseDouble(body, "humidity") != null
+                || parseDouble(body, "light_intensity", "light") != null
+                || parseDouble(body, "battery_percentage", "battery") != null;
     }
 
     private double defaultValue(Double value, double fallback) {

@@ -44,6 +44,9 @@ public class ProfileActivity extends AppCompatActivity {
         viewModel.getProfilesLiveData().observe(this, result -> {
             if (result != null && result.isSuccess() && result.getData() != null) {
                 adapter.setProfiles(result.getData());
+                if (result.getData().isEmpty() && result.getMessage() != null) {
+                    Toast.makeText(this, result.getMessage(), Toast.LENGTH_SHORT).show();
+                }
             } else if (result != null && result.getMessage() != null) {
                 Toast.makeText(this, result.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -109,11 +112,7 @@ public class ProfileActivity extends AppCompatActivity {
 
                 Toast.makeText(this, successText, Toast.LENGTH_LONG).show();
 
-                viewModel.refreshProfiles().observe(this, profilesResult -> {
-                    if (profilesResult != null && profilesResult.isSuccess() && profilesResult.getData() != null) {
-                        adapter.setProfiles(profilesResult.getData());
-                    }
-                });
+                viewModel.refreshProfiles();
             } else {
                 String message = result != null ? result.getMessage() : "Profile could not be created.";
                 Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
