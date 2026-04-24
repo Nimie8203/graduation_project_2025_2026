@@ -1,9 +1,7 @@
 #include "button.h"
-
+#include "led.h"
 
 void on_press(){
-
-    led_init();
 
     // Configure button GPIO as input
     gpio_set_direction(BUTTON_PIN, GPIO_MODE_INPUT);
@@ -22,6 +20,6 @@ void on_press(){
         }
         
         // Small delay to debounce and reduce CPU usage
-        delay(50);
+        delay_ms(50);
     }
 }

@@ -1,110 +1,125 @@
-#include "lcd.h" //Includes your header file function declarations
+#include "lcd.h"
 
-/* =========================
-   GPIO PIN DEFINITIONS
-   ========================= */
-#define RS  2  //select command
-#define EN  4  //enable signal
-#define D4  16 //data lines (4-bit mode),from d4 to d7
-#define D5  17
-#define D6  18
-#define D7  19
+static SemaphoreHandle_t lcd_mutex = NULL;
 
-/* =========================
-   PRIVATE FUNCTIONS
-   ========================= */
+/* ========================= PRIVATE ========================= */
 
-static void lcd_delay(void) {  //Small delay so LCD can process data
-    for(int i = 0; i < 5000; i++);
+static void lcd_enable(void)
+{
+    ets_delay_us(1);
+    gpio_set_level(LCD_E_PIN, 1);
+    ets_delay_us(1);
+    gpio_set_level(LCD_E_PIN, 0);
+    ets_delay_us(50);
 }
 
-static void lcd_enable(void) {
-    gpio_set_level(EN, 1);  //Turns EN ON then OFF, this will tell the lcd read the data now
-    lcd_delay();
-    gpio_set_level(EN, 0);
+static void lcd_send_nibble(uint8_t data)
+{
+    gpio_set_level(LCD_D4_PIN, (data >> 0) & 1);
+    gpio_set_level(LCD_D5_PIN, (data >> 1) & 1);
+    gpio_set_level(LCD_D6_PIN, (data >> 2) & 1);
+    gpio_set_level(LCD_D7_PIN, (data >> 3) & 1);
+    lcd_enable();
 }
 
-static void lcd_send_nibble(uint8_t data) { //Sends 4 bits only (because LCD is in 4-bit mode)
-    gpio_set_level(D4, (data >> 0) & 1); //Send bit 0 to pin D4
-    gpio_set_level(D5, (data >> 1) & 1); //Send bit 1 to D5
-    gpio_set_level(D6, (data >> 2) & 1); //Send bit 2 to D6
-    gpio_set_level(D7, (data >> 3) & 1); //Send bit 3 to D7
-    lcd_enable();  //Tell LCD to read these bits
+static void _lcd_command(uint8_t cmd)
+{
+    gpio_set_level(LCD_RS_PIN, 0);
+    lcd_send_nibble(cmd >> 4);
+    lcd_send_nibble(cmd & 0x0F);
+    ets_delay_us(37);
 }
 
-/* =========================
-   LOW-LEVEL FUNCTIONS
-   ========================= */
-
-void lcd_command(uint8_t cmd) { //Sends instruction to LCD
-
-    gpio_set_level(RS, 0); //RS = 0 → command mode
-
-    lcd_send_nibble(cmd >> 4); //Send upper 4 bits
-    lcd_send_nibble(cmd & 0x0F); //Send lower 4 bits
-
-    lcd_delay(); //Wait for LCD
+static void _lcd_send_data(uint8_t data)
+{
+    gpio_set_level(LCD_RS_PIN, 1);
+    lcd_send_nibble(data >> 4);
+    lcd_send_nibble(data & 0x0F);
+    ets_delay_us(37);
 }
 
-void lcd_send_data(uint8_t data) { //Sends a character
+/* ========================= INIT ========================= */
 
-    gpio_set_level(RS, 1);  //RS = 1 → data mode
+void lcd_init(void)
+{
+    lcd_mutex = xSemaphoreCreateMutex();
 
-    lcd_send_nibble(data >> 4); //Send character in 2 parts line 66 & 67
-    lcd_send_nibble(data & 0x0F); 
+    esp_rom_gpio_pad_select_gpio(LCD_RS_PIN);
+    esp_rom_gpio_pad_select_gpio(LCD_E_PIN);
+    esp_rom_gpio_pad_select_gpio(LCD_D4_PIN);
+    esp_rom_gpio_pad_select_gpio(LCD_D5_PIN);
+    esp_rom_gpio_pad_select_gpio(LCD_D6_PIN);
+    esp_rom_gpio_pad_select_gpio(LCD_D7_PIN);
 
-    lcd_delay(); //waiting
+    gpio_set_direction(LCD_RS_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_direction(LCD_E_PIN,  GPIO_MODE_OUTPUT);
+    gpio_set_direction(LCD_D4_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_direction(LCD_D5_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_direction(LCD_D6_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_direction(LCD_D7_PIN, GPIO_MODE_OUTPUT);
+
+    gpio_set_level(LCD_RS_PIN, 0);
+    gpio_set_level(LCD_E_PIN,  0);
+
+    ets_delay_us(50000);        // 50ms power-on
+
+    lcd_send_nibble(0x03);
+    ets_delay_us(5000);
+    lcd_send_nibble(0x03);
+    ets_delay_us(1000);
+    lcd_send_nibble(0x03);
+    ets_delay_us(1000);
+    lcd_send_nibble(0x02);
+    ets_delay_us(1000);
+
+    _lcd_command(0x28);         // 4-bit, 2 lines, 5x8 font
+    _lcd_command(0x08);         // display off
+    _lcd_command(0x01);         // clear
+    ets_delay_us(2000);
+    _lcd_command(0x06);         // entry mode
+    _lcd_command(0x0C);         // display on, no cursor
 }
 
-/* =========================
-   INITIALIZATION
-   ========================= */
+/* ========================= PUBLIC API ========================= */
 
-void lcd_init(void) {  //Starts LCD
-
-    gpio_set_direction(RS, GPIO_MODE_OUTPUT); //Set all pins as output
-    gpio_set_direction(EN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(D4, GPIO_MODE_OUTPUT);
-    gpio_set_direction(D5, GPIO_MODE_OUTPUT);
-    gpio_set_direction(D6, GPIO_MODE_OUTPUT);
-    gpio_set_direction(D7, GPIO_MODE_OUTPUT);
-
-    lcd_delay(); //Initial wait
-
-    lcd_command(0x28); //Set 4-bit mode, 2 lines
-    lcd_command(0x0C); //Display ON, cursor OFF
-    lcd_command(0x06); //Auto move cursor right
-    lcd_clear();   // use high-level instead of repeating 0x01 ,,Clear screen
-}
-
-/* =========================
-   HIGH-LEVEL FUNCTIONS
-   ========================= */
-
-void lcd_write_char(char c) { //Sends one character
-    lcd_send_data(c);
-}
-
-void lcd_write_string(char *str) {  //Loop through text
-    while(*str) { //Until end of string
-        lcd_write_char(*str); //Print each character
-        str++; //Move to next character
+void lcd_command(uint8_t cmd)
+{
+    if (xSemaphoreTake(lcd_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        _lcd_command(cmd);
+        xSemaphoreGive(lcd_mutex);
     }
 }
 
-void lcd_set_cursor(uint8_t row, uint8_t col) { //Move cursor position
-
-    uint8_t address;
-
-    if(row == 0) //First row
-        address = 0x80 + col;
-    else //Second row
-        address = 0xC0 + col;
-
-    lcd_command(address);  // uses low-level //Send position to LCD
+void lcd_set_cursor(uint8_t row, uint8_t col)
+{
+    uint8_t address = (row == 0) ? (0x80 + col) : (0xC0 + col);
+    if (xSemaphoreTake(lcd_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        _lcd_command(address);
+        xSemaphoreGive(lcd_mutex);
+    }
 }
 
-void lcd_clear(void) {
-    lcd_command(0x01);  // uses low-level, Clears display
+void lcd_write_char(char c)
+{
+    if (xSemaphoreTake(lcd_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        _lcd_send_data(c);
+        xSemaphoreGive(lcd_mutex);
+    }
+}
 
+void lcd_write_string(char *str)
+{
+    if (xSemaphoreTake(lcd_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        while (*str) _lcd_send_data(*str++);
+        xSemaphoreGive(lcd_mutex);
+    }
+}
+
+void lcd_clear(void)
+{
+    if (xSemaphoreTake(lcd_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        _lcd_command(0x01);
+        delay_ms(2);
+        xSemaphoreGive(lcd_mutex);
+    }
 }
