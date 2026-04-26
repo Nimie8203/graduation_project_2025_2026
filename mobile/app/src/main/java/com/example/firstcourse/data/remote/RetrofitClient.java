@@ -2,7 +2,6 @@ package com.example.firstcourse.data.remote;
 
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 /**
  * This class provides a singleton instance of the Retrofit client.
@@ -17,13 +16,12 @@ public class RetrofitClient {
 
     /**
      * Returns a singleton instance of the ApiService.
-     * Added ScalarsConverterFactory to handle plain text responses like "OK" from ESP32.
+     * Uses GsonConverterFactory for JSON responses returned by ESP32.
      */
     public static synchronized ApiService getApiService() {
         if (retrofit == null) {
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
-                    .addConverterFactory(ScalarsConverterFactory.create()) // For plain text responses
                     .addConverterFactory(GsonConverterFactory.create()) // For JSON parsing
                     .build();
         }

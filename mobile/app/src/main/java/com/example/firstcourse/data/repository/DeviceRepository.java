@@ -10,9 +10,9 @@ import com.example.firstcourse.data.model.IrrigationProfile;
 import com.example.firstcourse.data.model.IrrigationResponse;
 import com.example.firstcourse.data.remote.ApiService;
 import com.example.firstcourse.data.remote.RetrofitClient;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
@@ -20,8 +20,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -30,22 +28,7 @@ import retrofit2.Response;
 public class DeviceRepository {
 
     private static final boolean USE_MOCK_DATA = false;
-
-    // Synced with embedded/src/networking.c enum Commands (0-13)
-    private static final int LED_ON = 0;
-    private static final int LED_OFF = 1;
-    private static final int PUMP_ON = 2;
-    private static final int PUMP_OFF = 3;
-    private static final int LED_READ = 4;
-    private static final int TEMP_READ = 5;
-    private static final int HUMIDITY_READ = 6;
-    private static final int LIGHT_READ = 7;
-    private static final int MOISTURE_READ = 8;
-    private static final int FLOW_READ = 9;
-    private static final int STATUS_GENERAL = 10;
-    private static final int STATUS_LED = 11;
-    private static final int STATUS_PUMP = 12;
-    private static final int PROFILE = 13;
+    private static final int DEFAULT_MOISTURE_THRESHOLD = 30;
 
     private static DeviceRepository instance;
     private final ApiService apiService;
@@ -63,63 +46,83 @@ public class DeviceRepository {
 
     public LiveData<ApiResult<DeviceStatus>> getDeviceStatus() {
         MutableLiveData<ApiResult<DeviceStatus>> data = new MutableLiveData<>();
+
         if (USE_MOCK_DATA) {
             data.setValue(ApiResult.success(MockData.getMockDeviceStatus(), "Mock device status loaded."));
-        } else {
-            enqueueCommand(STATUS_GENERAL, new CommandHandler() {
-                @Override
-                public void onSuccess(String body) {
-                    if (!hasStructuredDeviceStatusFields(body)) {
-                        data.setValue(ApiResult.error(
-                                isAckOnlyResponse(body)
-                                        ? "ESP32 returned acknowledgement only. Structured device status is not exposed yet."
-                                        : "Device status could not be parsed: " + safeBody(body),
-                                ApiResult.FailureReason.PARSE_ERROR));
-                        return;
-                    }
-
-                    DeviceStatus status = parseDeviceStatus(body);
-                    data.setValue(ApiResult.success(status, "Device status updated."));
-                }
-
-                @Override
-                public void onFailure(ApiResult.FailureReason reason, String message) {
-                    data.setValue(ApiResult.error(message, reason));
-                }
-            });
+            return data;
         }
+
+        enqueueJson(apiService.getStatus(), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                if (!isStatusOk(body)) {
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "Device status request failed."), ApiResult.FailureReason.SERVER_ERROR));
+                    return;
+                }
+
+                data.setValue(ApiResult.success(parseDeviceStatus(body), "Device status updated."));
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+
         return data;
     }
 
     public LiveData<ApiResult<IrrigationResponse>> irrigateNow() {
         MutableLiveData<ApiResult<IrrigationResponse>> data = new MutableLiveData<>();
+
         if (USE_MOCK_DATA) {
             data.setValue(ApiResult.success(MockData.getMockIrrigationResponse(), "Mock irrigation command succeeded."));
-        } else {
-            enqueueCommand(PUMP_ON, new CommandHandler() {
-                @Override
-                public void onSuccess(String body) {
-                    IrrigationResponse irrigationResponse = new IrrigationResponse();
-                    irrigationResponse.setMessage("ESP32 response: " + safeBody(body));
-                    data.setValue(ApiResult.success(irrigationResponse, "Irrigation command sent."));
+            return data;
+        }
+
+        JsonObject payload = new JsonObject();
+        payload.addProperty("source", "mobile");
+        payload.addProperty("state", "on");
+
+        enqueueJson(apiService.setPumpState(payload), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                if (!isStatusOk(body)) {
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "Pump start command failed."), ApiResult.FailureReason.SERVER_ERROR));
+                    return;
                 }
 
-                @Override
-                public void onFailure(ApiResult.FailureReason reason, String message) {
-                    data.setValue(ApiResult.error(message, reason));
-                }
-            });
-        }
+                IrrigationResponse response = new IrrigationResponse();
+                response.setMessage("Pump started for mobile source.");
+                data.setValue(ApiResult.success(response, "Irrigation command sent."));
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+
         return data;
     }
 
     public LiveData<ApiResult<IrrigationResponse>> stopIrrigation() {
         MutableLiveData<ApiResult<IrrigationResponse>> data = new MutableLiveData<>();
-        enqueueCommand(PUMP_OFF, new CommandHandler() {
+
+        JsonObject payload = new JsonObject();
+        payload.addProperty("source", "mobile");
+        payload.addProperty("state", "off");
+
+        enqueueJson(apiService.setPumpState(payload), new JsonHandler() {
             @Override
-            public void onSuccess(String body) {
+            public void onSuccess(JsonObject body) {
+                if (!isStatusOk(body)) {
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "Pump stop command failed."), ApiResult.FailureReason.SERVER_ERROR));
+                    return;
+                }
+
                 IrrigationResponse response = new IrrigationResponse();
-                response.setMessage("Pump stopped: " + safeBody(body));
+                response.setMessage("Pump stopped for mobile source.");
                 data.setValue(ApiResult.success(response, "Pump stop command sent."));
             }
 
@@ -128,17 +131,27 @@ public class DeviceRepository {
                 data.setValue(ApiResult.error(message, reason));
             }
         });
+
         return data;
     }
 
     public LiveData<ApiResult<Boolean>> setLedStatus(boolean turnOn) {
         MutableLiveData<ApiResult<Boolean>> data = new MutableLiveData<>();
-        int command = turnOn ? LED_ON : LED_OFF;
 
-        enqueueCommand(command, new CommandHandler() {
+        JsonObject payload = new JsonObject();
+        payload.addProperty("state", turnOn ? "on" : "off");
+
+        enqueueJson(apiService.setLedState(payload), new JsonHandler() {
             @Override
-            public void onSuccess(String body) {
-                data.setValue(ApiResult.success(turnOn, "LED command applied: " + safeBody(body)));
+            public void onSuccess(JsonObject body) {
+                if (!isStatusOk(body)) {
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "LED command failed."), ApiResult.FailureReason.SERVER_ERROR));
+                    return;
+                }
+
+                Boolean parsed = parseStateBoolean(body.get("state"));
+                boolean resolved = parsed != null ? parsed : turnOn;
+                data.setValue(ApiResult.success(resolved, "LED command applied."));
             }
 
             @Override
@@ -153,20 +166,21 @@ public class DeviceRepository {
     public LiveData<ApiResult<Boolean>> getLedStatus() {
         MutableLiveData<ApiResult<Boolean>> data = new MutableLiveData<>();
 
-        enqueueCommand(LED_READ, new CommandHandler() {
+        enqueueJson(apiService.getStatus(), new JsonHandler() {
             @Override
-            public void onSuccess(String body) {
-                Boolean parsed = parseBoolean(body);
-                if (parsed != null) {
-                    data.setValue(ApiResult.success(parsed, "LED status received: " + safeBody(body)));
+            public void onSuccess(JsonObject body) {
+                if (!isStatusOk(body)) {
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "LED status request failed."), ApiResult.FailureReason.SERVER_ERROR));
                     return;
                 }
 
-                data.setValue(ApiResult.error(
-                        isAckOnlyResponse(body)
-                                ? "ESP32 returned acknowledgement only. LED state is not exposed yet."
-                                : "LED status could not be parsed: " + safeBody(body),
-                        ApiResult.FailureReason.PARSE_ERROR));
+                Boolean led = getBoolean(body, "led");
+                if (led == null) {
+                    data.setValue(ApiResult.error("LED field is missing in /api/status response.", ApiResult.FailureReason.PARSE_ERROR));
+                    return;
+                }
+
+                data.setValue(ApiResult.success(led, "LED status received."));
             }
 
             @Override
@@ -179,114 +193,264 @@ public class DeviceRepository {
     }
 
     public LiveData<ApiResult<Double>> readTemperature() {
-        return readSensorDouble(TEMP_READ, "temperature", "Temperature read.");
+        return readSensorFromStatus("temperature", "Temperature read.");
     }
 
     public LiveData<ApiResult<Double>> readHumidity() {
-        return readSensorDouble(HUMIDITY_READ, "humidity", "Humidity read.");
+        return readSensorFromStatus("humidity", "Humidity read.");
     }
 
     public LiveData<ApiResult<Double>> readLightIntensity() {
-        return readSensorDouble(LIGHT_READ, "light", "Light intensity read.");
+        return readSensorFromStatus("light_intensity", "Light intensity read.");
     }
 
     public LiveData<ApiResult<Double>> readSoilMoisture() {
-        return readSensorDouble(MOISTURE_READ, "soil_moisture", "Soil moisture read.");
+        MutableLiveData<ApiResult<Double>> data = new MutableLiveData<>();
+        enqueueJson(apiService.getStatus(), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                if (!isStatusOk(body)) {
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "Moisture request failed."), ApiResult.FailureReason.SERVER_ERROR));
+                    return;
+                }
+
+                Double moisture = averageMoisture(body);
+                if (moisture == null) {
+                    data.setValue(ApiResult.error("Moisture fields are missing in /api/status response.", ApiResult.FailureReason.PARSE_ERROR));
+                    return;
+                }
+
+                data.setValue(ApiResult.success(moisture, "Soil moisture read."));
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+        return data;
     }
 
     public LiveData<ApiResult<Double>> readFlow() {
-        return readSensorDouble(FLOW_READ, "flow", "Flow rate read.");
+        MutableLiveData<ApiResult<Double>> data = new MutableLiveData<>();
+        enqueueJson(apiService.getStatus(), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                if (!isStatusOk(body)) {
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "Flow request failed."), ApiResult.FailureReason.SERVER_ERROR));
+                    return;
+                }
+
+                Double flow1 = getNumber(body, "flow_sensor_1");
+                Double flow2 = getNumber(body, "flow_sensor_2");
+
+                if (flow1 == null && flow2 == null) {
+                    data.setValue(ApiResult.error("Flow fields are missing in /api/status response.", ApiResult.FailureReason.PARSE_ERROR));
+                    return;
+                }
+
+                double value;
+                if (flow1 != null && flow2 != null) {
+                    value = (flow1 + flow2) / 2.0;
+                } else if (flow1 != null) {
+                    value = flow1;
+                } else {
+                    value = flow2;
+                }
+
+                data.setValue(ApiResult.success(value, "Flow rate read."));
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+        return data;
     }
 
     public LiveData<ApiResult<String>> getGeneralStatusRaw() {
-        return executeRawCommand(STATUS_GENERAL, "General status received.");
+        MutableLiveData<ApiResult<String>> data = new MutableLiveData<>();
+        enqueueJson(apiService.getStatus(), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                data.setValue(ApiResult.success(body.toString(), "General status received."));
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+        return data;
     }
 
     public LiveData<ApiResult<String>> getLedStatusRaw() {
-        return executeRawCommand(STATUS_LED, "LED system status received.");
+        MutableLiveData<ApiResult<String>> data = new MutableLiveData<>();
+        enqueueJson(apiService.getStatus(), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                JsonObject ledStatus = new JsonObject();
+                ledStatus.add("led", body.get("led"));
+                ledStatus.add("status", body.get("status"));
+                data.setValue(ApiResult.success(ledStatus.toString(), "LED system status received."));
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+        return data;
     }
 
     public LiveData<ApiResult<String>> getPumpStatusRaw() {
-        return executeRawCommand(STATUS_PUMP, "Pump system status received.");
+        MutableLiveData<ApiResult<String>> data = new MutableLiveData<>();
+        enqueueJson(apiService.getStatus(), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                JsonObject pumpStatus = new JsonObject();
+                pumpStatus.add("pump_1", body.get("pump_1"));
+                pumpStatus.add("pump_2", body.get("pump_2"));
+                pumpStatus.add("status", body.get("status"));
+                data.setValue(ApiResult.success(pumpStatus.toString(), "Pump system status received."));
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+        return data;
     }
 
     public LiveData<ApiResult<String>> getProfileRaw() {
-        return executeRawCommand(PROFILE, "Profile data received.");
+        MutableLiveData<ApiResult<String>> data = new MutableLiveData<>();
+        enqueueJson(apiService.getProfile(), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                data.setValue(ApiResult.success(body.toString(), "Profile data received."));
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+        return data;
     }
 
-    /**
-     * Fetches the list of irrigation profiles.
-     * @return A LiveData object containing the list of profiles.
-     */
     public LiveData<ApiResult<List<IrrigationProfile>>> getIrrigationProfiles() {
         MutableLiveData<ApiResult<List<IrrigationProfile>>> data = new MutableLiveData<>();
+
         if (USE_MOCK_DATA) {
             data.setValue(ApiResult.success(MockData.getMockIrrigationProfiles(), "Mock profile list loaded."));
-        } else {
-            enqueueCommand(PROFILE, new CommandHandler() {
-                @Override
-                public void onSuccess(String body) {
-                    List<IrrigationProfile> parsed = parseProfiles(body);
-                    String message = parsed.isEmpty() && isAckOnlyResponse(body)
-                            ? "ESP32 returned acknowledgement only. Profile list is not exposed yet."
-                            : "Profile list updated.";
-                    data.setValue(ApiResult.success(parsed, message));
-                }
-
-                @Override
-                public void onFailure(ApiResult.FailureReason reason, String message) {
-                    data.setValue(ApiResult.error(message, reason));
-                }
-            });
+            return data;
         }
-        return data;
-    }
 
-    /**
-     * Creates a new irrigation profile.
-     * @param profile The profile to create.
-     * @return A LiveData object containing the created profile from the server.
-     */
-    public LiveData<ApiResult<IrrigationProfile>> createIrrigationProfile(IrrigationProfile profile) {
-        MutableLiveData<ApiResult<IrrigationProfile>> data = new MutableLiveData<>();
-        if (USE_MOCK_DATA) {
-            data.setValue(ApiResult.success(profile, "Mock profile created."));
-        } else {
-            enqueueCommand(PROFILE, new CommandHandler() {
-                @Override
-                public void onSuccess(String body) {
-                    if (isAckSuccessful(body)) {
-                        data.setValue(ApiResult.success(profile, "Profile confirmed by device."));
-                    } else {
-                        data.setValue(ApiResult.error(
-                                "Profile could not be saved. Device confirmation was not received.",
-                                ApiResult.FailureReason.SERVER_ERROR));
-                    }
-                }
-
-                @Override
-                public void onFailure(ApiResult.FailureReason reason, String message) {
-                    data.setValue(ApiResult.error(message, reason));
-                }
-            });
-        }
-        return data;
-    }
-
-    private LiveData<ApiResult<Double>> readSensorDouble(int command, String keyHint, String successMessage) {
-        MutableLiveData<ApiResult<Double>> data = new MutableLiveData<>();
-        enqueueCommand(command, new CommandHandler() {
+        enqueueJson(apiService.getProfile(), new JsonHandler() {
             @Override
-            public void onSuccess(String body) {
-                Double value = parseDouble(body, keyHint);
-                if (value == null) {
-                    data.setValue(ApiResult.error(
-                            isAckOnlyResponse(body)
-                                    ? "ESP32 returned acknowledgement only. " + keyHint + " is not exposed yet."
-                                    : "Sensor response could not be parsed: " + safeBody(body),
-                            ApiResult.FailureReason.PARSE_ERROR));
+            public void onSuccess(JsonObject body) {
+                if (isNoActiveProfile(body)) {
+                    data.setValue(ApiResult.success(new ArrayList<>(), getDeviceMessage(body, "No active profile.")));
                     return;
                 }
+
+                if (!isStatusOk(body)) {
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "Profile list request failed."), ApiResult.FailureReason.SERVER_ERROR));
+                    return;
+                }
+
+                IrrigationProfile profile = parseProfile(body);
+                if (profile == null) {
+                    data.setValue(ApiResult.error("Profile payload could not be parsed.", ApiResult.FailureReason.PARSE_ERROR));
+                    return;
+                }
+
+                List<IrrigationProfile> list = new ArrayList<>();
+                list.add(profile);
+                data.setValue(ApiResult.success(list, "Profile list updated."));
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+
+        return data;
+    }
+
+    public LiveData<ApiResult<IrrigationProfile>> createIrrigationProfile(IrrigationProfile profile) {
+        MutableLiveData<ApiResult<IrrigationProfile>> data = new MutableLiveData<>();
+
+        if (USE_MOCK_DATA) {
+            data.setValue(ApiResult.success(profile, "Mock profile created."));
+            return data;
+        }
+
+        if (profile == null || profile.getPlantName() == null || profile.getPlantName().trim().isEmpty()) {
+            data.setValue(ApiResult.error("Plant name is required.", ApiResult.FailureReason.PARSE_ERROR));
+            return data;
+        }
+
+        if (profile.getTimesOfDay() == null || profile.getTimesOfDay().isEmpty()) {
+            data.setValue(ApiResult.error("times_of_day must include at least one value.", ApiResult.FailureReason.PARSE_ERROR));
+            return data;
+        }
+
+        JsonObject payload = new JsonObject();
+        payload.addProperty("profile_name", profile.getPlantName().trim() + " Profile");
+        payload.addProperty("plant_name", profile.getPlantName().trim());
+        payload.addProperty("irrig_times_per_day", profile.getTimesPerDay());
+        payload.addProperty("water_amount_per_irrig", profile.getWaterAmount());
+        payload.addProperty("moisture_threshold", DEFAULT_MOISTURE_THRESHOLD);
+
+        JsonArray times = new JsonArray();
+        for (Integer time : profile.getTimesOfDay()) {
+            if (time != null) {
+                times.add(time);
+            }
+        }
+        payload.add("times_of_day", times);
+
+        enqueueJson(apiService.createProfile(payload), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                if (!isStatusOk(body)) {
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "Profile could not be saved."), ApiResult.FailureReason.SERVER_ERROR));
+                    return;
+                }
+
+                data.setValue(ApiResult.success(profile, "Profile confirmed by device."));
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+
+        return data;
+    }
+
+    private LiveData<ApiResult<Double>> readSensorFromStatus(String fieldName, String successMessage) {
+        MutableLiveData<ApiResult<Double>> data = new MutableLiveData<>();
+
+        enqueueJson(apiService.getStatus(), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                if (!isStatusOk(body)) {
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "Sensor request failed."), ApiResult.FailureReason.SERVER_ERROR));
+                    return;
+                }
+
+                Double value = getNumber(body, fieldName);
+                if (value == null) {
+                    data.setValue(ApiResult.error(fieldName + " field is missing in /api/status response.", ApiResult.FailureReason.PARSE_ERROR));
+                    return;
+                }
+
                 data.setValue(ApiResult.success(value, successMessage));
             }
 
@@ -295,238 +459,193 @@ public class DeviceRepository {
                 data.setValue(ApiResult.error(message, reason));
             }
         });
+
         return data;
     }
 
-    private LiveData<ApiResult<String>> executeRawCommand(int command, String successMessage) {
-        MutableLiveData<ApiResult<String>> data = new MutableLiveData<>();
-        enqueueCommand(command, new CommandHandler() {
-            @Override
-            public void onSuccess(String body) {
-                data.setValue(ApiResult.success(safeBody(body), successMessage));
-            }
+    private DeviceStatus parseDeviceStatus(JsonObject body) {
+        DeviceStatus status = new DeviceStatus();
+        status.setTemperature(defaultValue(getNumber(body, "temperature"), 0.0));
+        status.setHumidity(defaultValue(getNumber(body, "humidity"), 0.0));
+        status.setLightIntensity((int) Math.round(defaultValue(getNumber(body, "light_intensity"), 0.0)));
 
-            @Override
-            public void onFailure(ApiResult.FailureReason reason, String message) {
-                data.setValue(ApiResult.error(message, reason));
-            }
-        });
-        return data;
+        Double moisture = averageMoisture(body);
+        status.setSoilMoisture(defaultValue(moisture, 0.0));
+
+        // Firmware response currently does not expose battery.
+        status.setBatteryPercentage(0);
+
+        List<String> alerts = new ArrayList<>();
+        alerts.add(String.format(Locale.getDefault(), "LED=%s, Pump1=%s, Pump2=%s",
+                String.valueOf(getBoolean(body, "led")),
+                String.valueOf(getBoolean(body, "pump_1")),
+                String.valueOf(getBoolean(body, "pump_2"))));
+        alerts.add("Battery value is not exposed by firmware; showing 0.");
+        status.setSystemAlerts(alerts);
+
+        return status;
     }
 
-    private void enqueueCommand(int command, CommandHandler handler) {
-        apiService.sendCommand(command).enqueue(new Callback<String>() {
+    private IrrigationProfile parseProfile(JsonObject body) {
+        String plantName = getString(body, "plant_name");
+        Double timesPerDayRaw = getNumber(body, "irrig_times_per_day");
+        Double waterAmountRaw = getNumber(body, "water_amount_per_irrig");
+
+        if (plantName == null || timesPerDayRaw == null || waterAmountRaw == null) {
+            return null;
+        }
+
+        List<Integer> times = new ArrayList<>();
+        JsonElement todElement = body.get("times_of_day");
+        if (todElement != null && todElement.isJsonArray()) {
+            for (JsonElement e : todElement.getAsJsonArray()) {
+                try {
+                    times.add(e.getAsInt());
+                } catch (Exception ignored) {
+                }
+            }
+        }
+
+        return new IrrigationProfile(
+                plantName,
+                (int) Math.round(timesPerDayRaw),
+                times,
+                (int) Math.round(waterAmountRaw)
+        );
+    }
+
+    private Double averageMoisture(JsonObject body) {
+        double total = 0.0;
+        int count = 0;
+
+        for (String key : new String[]{"moisture_1", "moisture_2", "moisture_3", "moisture_4"}) {
+            Double value = getNumber(body, key);
+            if (value != null) {
+                total += value;
+                count++;
+            }
+        }
+
+        if (count == 0) {
+            return null;
+        }
+
+        return total / count;
+    }
+
+    private void enqueueJson(Call<JsonObject> call, JsonHandler handler) {
+        call.enqueue(new Callback<JsonObject>() {
             @Override
-            public void onResponse(Call<String> call, Response<String> response) {
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     handler.onSuccess(response.body());
                     return;
                 }
+
                 handler.onFailure(
                         ApiResult.FailureReason.SERVER_ERROR,
-                    "Device is not responding or returned an invalid response."
+                        "Device is not responding or returned an invalid response."
                 );
             }
 
             @Override
-            public void onFailure(Call<String> call, Throwable t) {
+            public void onFailure(Call<JsonObject> call, Throwable t) {
                 handler.onFailure(resolveFailureReason(t), resolveFailureMessage(t));
             }
         });
     }
 
-    private DeviceStatus parseDeviceStatus(String raw) {
-        DeviceStatus status = new DeviceStatus();
-        status.setSoilMoisture(defaultValue(parseDouble(raw, "soil_moisture", "moisture"), 0.0));
-        status.setTemperature(defaultValue(parseDouble(raw, "temperature", "temp"), 0.0));
-        status.setHumidity(defaultValue(parseDouble(raw, "humidity"), 0.0));
-        status.setLightIntensity((int) Math.round(defaultValue(parseDouble(raw, "light_intensity", "light"), 0.0)));
-        status.setBatteryPercentage((int) Math.round(defaultValue(parseDouble(raw, "battery_percentage", "battery"), 0.0)));
-
-        List<String> alerts = new ArrayList<>();
-        alerts.add("Raw response: " + safeBody(raw));
-        if (isAckOnlyResponse(raw)) {
-            alerts.add("Structured device status is not exposed by the firmware yet.");
-        }
-        status.setSystemAlerts(alerts);
-        return status;
+    private boolean isStatusOk(JsonObject body) {
+        String status = getString(body, "status");
+        return status != null && "ok".equalsIgnoreCase(status);
     }
 
-    private List<IrrigationProfile> parseProfiles(String raw) {
-        List<IrrigationProfile> profiles = new ArrayList<>();
-
-        if (raw == null || raw.trim().isEmpty()) {
-            return profiles;
-        }
-
-        try {
-            JsonElement element = new JsonParser().parse(raw);
-            if (element.isJsonArray()) {
-                element.getAsJsonArray().forEach(item -> {
-                    if (!item.isJsonObject()) {
-                        return;
-                    }
-                    JsonObject o = item.getAsJsonObject();
-                    String plant = getString(o, "plant_name", "plant", "name");
-                    int timesPerDay = (int) Math.round(defaultValue(getDouble(o, "times_per_day"), 0.0));
-                    int waterAmount = (int) Math.round(defaultValue(getDouble(o, "water_amount"), 0.0));
-
-                    List<Integer> times = new ArrayList<>();
-                    if (o.has("times_of_day") && o.get("times_of_day").isJsonArray()) {
-                        o.getAsJsonArray("times_of_day").forEach(t -> {
-                            try {
-                                times.add(t.getAsInt());
-                            } catch (Exception ignored) {
-                            }
-                        });
-                    }
-
-                    profiles.add(new IrrigationProfile(plant, timesPerDay, times, waterAmount));
-                });
-                return profiles;
-            }
-        } catch (Exception ignored) {
-            // Fallback to mock data shape if device returns non-JSON.
-        }
-
-        return profiles;
+    private boolean isNoActiveProfile(JsonObject body) {
+        String status = getString(body, "status");
+        String msg = getString(body, "msg");
+        return status != null
+                && "error".equalsIgnoreCase(status)
+                && msg != null
+                && msg.toLowerCase(Locale.ROOT).contains("no active profile");
     }
 
-    private boolean isAckSuccessful(String body) {
-        String normalized = safeBody(body).toLowerCase(Locale.ROOT);
-        return normalized.contains("ok")
-                || normalized.contains("success")
-                || normalized.contains("created")
-                || normalized.contains("done");
+    private String getDeviceMessage(JsonObject body, String fallback) {
+        String msg = getString(body, "msg");
+        return msg != null && !msg.trim().isEmpty() ? msg : fallback;
     }
 
-    private String safeBody(String body) {
-        return body == null ? "" : body.trim();
-    }
-
-    private Double parseDouble(String raw, String... keyHints) {
-        if (raw == null || raw.trim().isEmpty()) {
+    private Double getNumber(JsonObject obj, String key) {
+        if (obj == null || key == null || !obj.has(key) || obj.get(key) == null) {
             return null;
         }
 
-        // Try JSON first.
         try {
-            JsonElement element = new JsonParser().parse(raw);
-            if (element.isJsonObject()) {
-                JsonObject obj = element.getAsJsonObject();
-                for (String keyHint : keyHints) {
-                    Double v = getDouble(obj, keyHint);
-                    if (v != null) {
-                        return v;
-                    }
+            JsonElement element = obj.get(key);
+            if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber()) {
+                return element.getAsDouble();
+            }
+            if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
+                return Double.parseDouble(element.getAsString());
+            }
+        } catch (Exception ignored) {
+        }
+
+        return null;
+    }
+
+    private Boolean getBoolean(JsonObject obj, String key) {
+        if (obj == null || key == null || !obj.has(key) || obj.get(key) == null) {
+            return null;
+        }
+
+        try {
+            JsonElement element = obj.get(key);
+            if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isBoolean()) {
+                return element.getAsBoolean();
+            }
+            return parseStateBoolean(element);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private Boolean parseStateBoolean(JsonElement element) {
+        if (element == null || !element.isJsonPrimitive()) {
+            return null;
+        }
+
+        try {
+            if (element.getAsJsonPrimitive().isBoolean()) {
+                return element.getAsBoolean();
+            }
+            if (element.getAsJsonPrimitive().isNumber()) {
+                return element.getAsInt() != 0;
+            }
+            if (element.getAsJsonPrimitive().isString()) {
+                String normalized = element.getAsString().trim().toLowerCase(Locale.ROOT);
+                if ("on".equals(normalized) || "true".equals(normalized) || "1".equals(normalized)) {
+                    return true;
                 }
-                Double fallback = getFirstNumericValue(obj);
-                if (fallback != null) {
-                    return fallback;
+                if ("off".equals(normalized) || "false".equals(normalized) || "0".equals(normalized)) {
+                    return false;
                 }
             }
         } catch (Exception ignored) {
-            // Not JSON; continue with text parsing.
-        }
-
-        // key=value parsing.
-        for (String keyHint : keyHints) {
-            Pattern p = Pattern.compile("(?i)" + Pattern.quote(keyHint) + "\\s*[:=]\\s*(-?\\d+(?:\\.\\d+)?)");
-            Matcher m = p.matcher(raw);
-            if (m.find()) {
-                try {
-                    return Double.parseDouble(m.group(1));
-                } catch (NumberFormatException ignored) {
-                }
-            }
-        }
-
-        // Last resort: first number in response.
-        Matcher any = Pattern.compile("-?\\d+(?:\\.\\d+)?").matcher(raw);
-        if (any.find()) {
-            try {
-                return Double.parseDouble(any.group());
-            } catch (NumberFormatException ignored) {
-            }
         }
 
         return null;
     }
 
-    private Double getFirstNumericValue(JsonObject obj) {
-        for (String key : obj.keySet()) {
-            try {
-                JsonElement element = obj.get(key);
-                if (element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber()) {
-                    return element.getAsDouble();
-                }
-            } catch (Exception ignored) {
-            }
+    private String getString(JsonObject obj, String key) {
+        if (obj == null || key == null || !obj.has(key) || obj.get(key) == null) {
+            return null;
         }
-        return null;
-    }
 
-    private Double getDouble(JsonObject obj, String... keys) {
-        for (String key : keys) {
-            if (!obj.has(key) || obj.get(key) == null) {
-                continue;
-            }
-            try {
-                JsonElement element = obj.get(key);
-                if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber()) {
-                    return element.getAsDouble();
-                }
-                if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
-                    return Double.parseDouble(element.getAsString());
-                }
-            } catch (Exception ignored) {
-            }
+        try {
+            return obj.get(key).getAsString();
+        } catch (Exception ignored) {
+            return null;
         }
-        return null;
-    }
-
-    private String getString(JsonObject obj, String... keys) {
-        for (String key : keys) {
-            if (!obj.has(key) || obj.get(key) == null) {
-                continue;
-            }
-            try {
-                return obj.get(key).getAsString();
-            } catch (Exception ignored) {
-            }
-        }
-        return "Unknown";
-    }
-
-    private Boolean parseBoolean(String body) {
-        String normalized = safeBody(body).toLowerCase(Locale.ROOT);
-        if (normalized.matches(".*\\b(on|true|1)\\b.*")) {
-            return true;
-        }
-        if (normalized.matches(".*\\b(off|false|0)\\b.*")) {
-            return false;
-        }
-        return null;
-    }
-
-    private boolean isAckOnlyResponse(String body) {
-        String normalized = safeBody(body).toLowerCase(Locale.ROOT);
-        return "ok".equals(normalized)
-                || normalized.startsWith("ok ")
-                || normalized.startsWith("ok:")
-                || normalized.contains("ack")
-                || normalized.contains("command executed")
-                || normalized.contains("device confirmation")
-                || normalized.contains("success")
-                || normalized.contains("done");
-    }
-
-    private boolean hasStructuredDeviceStatusFields(String body) {
-        return parseDouble(body, "soil_moisture", "moisture") != null
-                || parseDouble(body, "temperature", "temp") != null
-                || parseDouble(body, "humidity") != null
-                || parseDouble(body, "light_intensity", "light") != null
-                || parseDouble(body, "battery_percentage", "battery") != null;
     }
 
     private double defaultValue(Double value, double fallback) {
@@ -553,8 +672,8 @@ public class DeviceRepository {
         return "Connection error: " + (t.getMessage() != null ? t.getMessage() : "Unknown error");
     }
 
-    private interface CommandHandler {
-        void onSuccess(String body);
+    private interface JsonHandler {
+        void onSuccess(JsonObject body);
 
         void onFailure(ApiResult.FailureReason reason, String message);
     }
