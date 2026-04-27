@@ -17,7 +17,7 @@ static void state_task(void *arg)
         read_tank();
         read_pipe();
         read_ldr();
-        read_moisture4();
+        read_moisture();
         
         delay_ms(3000);
     }
