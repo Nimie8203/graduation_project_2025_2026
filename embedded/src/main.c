@@ -72,6 +72,14 @@ void app_main(void)
         ESP_LOGI(TANK_TAG, "%d", g_state.tank_state);
         ESP_LOGI(PIPE_TAG, "%d", g_state.pipe_state);
         ESP_LOGI(GENERAL_TAG, "++++++++++++++");
-        delay_ms(3000);
+        //delay_ms(3000);
+
+        pump_on(1);
+        pump_on(2);
+        delay_ms(1500);
+        pump_off(1);
+        pump_off(2);
+        delay_ms(1500);
+
     }
 }
