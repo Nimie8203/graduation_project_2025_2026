@@ -17,6 +17,8 @@ void app_main(void)
     delay_ms(500);
     init_led();
     delay_ms(500);
+    lcd_init();
+    delay_ms(500);
     init_networking();
     delay_ms(500);
     init_adc1_shared();
@@ -37,7 +39,8 @@ void app_main(void)
     lcd_write_string("BOOTED!");
     delay_ms(2000);
     lcd_clear();
-    delay_ms(1000);
+    delay_ms(10);
+    lcd_set_cursor(0, 0); 
     lcd_write_string("READING STATES...");
 
     g_state.flow_sens_1 = 0;
@@ -69,6 +72,14 @@ void app_main(void)
         ESP_LOGI(TANK_TAG, "%d", g_state.tank_state);
         ESP_LOGI(PIPE_TAG, "%d", g_state.pipe_state);
         ESP_LOGI(GENERAL_TAG, "++++++++++++++");
-        delay_ms(3000);
+        //delay_ms(3000);
+
+        pump_on(1);
+        pump_on(2);
+        delay_ms(1500);
+        pump_off(1);
+        pump_off(2);
+        delay_ms(1500);
+
     }
 }

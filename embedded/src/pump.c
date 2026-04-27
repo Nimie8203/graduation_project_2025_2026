@@ -2,8 +2,18 @@
 
 void init_pumps()
 {
-    gpio_set_direction(PUMP_1_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(PUMP_2_PIN, GPIO_MODE_OUTPUT);
+    gpio_reset_pin(PUMP_1_PIN);
+    gpio_reset_pin(PUMP_2_PIN);
+
+    gpio_config_t pump_conf = {
+        .pin_bit_mask = (1ULL << PUMP_1_PIN) | (1ULL << PUMP_2_PIN),
+        .mode         = GPIO_MODE_OUTPUT,
+        .pull_up_en   = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type    = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&pump_conf);
+
     gpio_set_level(PUMP_1_PIN, 0);
     gpio_set_level(PUMP_2_PIN, 0);
     g_state.pump_1_state = false;
