@@ -3,9 +3,18 @@
 
 void init_led(void)
 {
-    gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT);
+    gpio_reset_pin(LED_PIN);
+    gpio_config_t led_config = {
+        .pin_bit_mask = (1ULL << LED_PIN),
+        .mode         = GPIO_MODE_OUTPUT,
+        .pull_up_en   = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type    = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&led_config);
+
     led_off();
-    ESP_LOGI(LED_TAG, "LED Initated");
+    ESP_LOGI(LED_TAG, "LED Initiated");
 }
 
 void led_on(void)
