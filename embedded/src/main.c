@@ -15,7 +15,7 @@
 
 void app_main(void)
 {
-
+    delay_ms(1000);
     init_monitoring_uart();
     delay_ms(1000);
     esp_err_t ret = nvs_flash_init();
@@ -73,10 +73,10 @@ void app_main(void)
         ESP_LOGI(TANK_TAG, "%d", g_state.tank_state);
         ESP_LOGI(PIPE_TAG, "%d", g_state.pipe_state);
         ESP_LOGI(GENERAL_TAG, "++++++++++++++");
-        //delay_ms(1000);
+        // delay_ms(1000);
 
-        //pump_on(1);
-        //pump_on(2);
+        // pump_on(1);
+        // pump_on(2);
         delay_ms(1500);
     }
 }
