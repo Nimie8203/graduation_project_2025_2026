@@ -7,12 +7,16 @@ import { useEspConnection } from '@/lib/useEspConnection';
 export default function Dashboard() {
   const { isConnected, lastResponseTime } = useEspConnection();
   const [sensorData, setSensorData] = useState({
-    soilMoisture: null,
+    soilMoisture1: null,
+    soilMoisture2: null,
+    soilMoisture3: null,
+    soilMoisture4: null,
     temperature: null,
     humidity: null,
     lightIntensity: null,
     waterLevel: null,
-    batteryPercentage: null,
+    flowSensor1: null,
+    flowSensor2: null,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,12 +36,16 @@ export default function Dashboard() {
       // Map the response data to our state
       // Adjust these keys based on your ESP32 API response structure
       setSensorData({
-        soilMoisture: data.soilMoisture ?? data.soil_moisture ?? data.moisture ?? null,
+        soilMoisture1: data.soilMoisture1 ?? data.soil_moisture_1 ?? data.moisture_1 ?? null,
+        soilMoisture2: data.soilMoisture2 ?? data.soil_moisture_2 ?? data.moisture_2 ?? null,
+        soilMoisture3: data.soilMoisture3 ?? data.soil_moisture_3 ?? data.moisture_3 ?? null,
+        soilMoisture4: data.soilMoisture4 ?? data.soil_moisture_4 ?? data.moisture_4 ?? null,
         temperature: data.temperature ?? data.temp ?? null,
         humidity: data.humidity ?? data.hum ?? null,
         lightIntensity: data.lightIntensity ?? data.light ?? data.light_intensity ?? null,
         waterLevel: data.waterLevel ?? data.water_level ?? data.level ?? null,
-        batteryPercentage: data.batteryPercentage ?? data.battery ?? data.battery_percentage ?? null,
+        flowSensor1: data.flowSensor1 ?? data.flow_sensor_1 ?? null,
+        flowSensor2: data.flowSensor2 ?? data.flow_sensor_2 ?? null,
       });
       setLoading(false);
     } catch (err) {
@@ -121,44 +129,61 @@ export default function Dashboard() {
         )}
 
         {/* Sensor Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <SensorCard
-            title="Soil Moisture"
-            value={sensorData.soilMoisture}
-            unit="%"
-            icon="🌱"
-          />
+        {/* Replace just the "Sensor Grid" section with this */}
+
+      {/* Environmental Row */}
+      <div>
+        <p className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
+          
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <SensorCard
             title="Temperature"
-            value={sensorData.temperature}
+            value={sensorData.temperature !== null ? (sensorData.temperature / 10).toFixed(1) : null}
             unit="°C"
             icon="🌡️"
           />
           <SensorCard
             title="Humidity"
-            value={sensorData.humidity}
+            value={sensorData.humidity !== null ? (sensorData.humidity / 10).toFixed(1) : null}
             unit="%"
             icon="💧"
           />
           <SensorCard
             title="Light Intensity"
             value={sensorData.lightIntensity}
-            unit="lux"
+            unit="%"
             icon="☀️"
           />
-          <SensorCard
-            title="Water Level"
-            value={sensorData.waterLevel}
-            unit="%"
-            icon="💦"
-          />
-          <SensorCard
-            title="Battery"
-            value={sensorData.batteryPercentage}
-            unit="%"
-            icon="🔋"
-          />
         </div>
+      </div>
+
+      {/* Soil Moisture Row */}
+      <div>
+        <p className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
+          
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <SensorCard title="Soil Moisture 1" value={sensorData.soilMoisture1} unit="%" icon="🌱" />
+          <SensorCard title="Soil Moisture 2" value={sensorData.soilMoisture2} unit="%" icon="🌱" />
+          <SensorCard title="Soil Moisture 3" value={sensorData.soilMoisture3} unit="%" icon="🌱" />
+          <SensorCard title="Soil Moisture 4" value={sensorData.soilMoisture4} unit="%" icon="🌱" />
+        </div>
+      </div>
+
+      {/* Water System Row */}
+      <div>
+        <p className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
+          
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-1">
+            <SensorCard title="Water Level" value={sensorData.waterLevel} unit="%" icon="💦" />
+          </div>
+          <SensorCard title="Flow Sensor 1" value={sensorData.flowSensor1} unit="L / Min" icon="🚰" />
+          <SensorCard title="Flow Sensor 2" value={sensorData.flowSensor2} unit="L / Min" icon="🚰" />
+        </div>
+      </div>
       </div>
     </div>
   );
