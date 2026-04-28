@@ -44,19 +44,23 @@ void lcd_init(void)
 {
     lcd_mutex = xSemaphoreCreateMutex();
 
-    esp_rom_gpio_pad_select_gpio(LCD_RS_PIN);
-    esp_rom_gpio_pad_select_gpio(LCD_E_PIN);
-    esp_rom_gpio_pad_select_gpio(LCD_D4_PIN);
-    esp_rom_gpio_pad_select_gpio(LCD_D5_PIN);
-    esp_rom_gpio_pad_select_gpio(LCD_D6_PIN);
-    esp_rom_gpio_pad_select_gpio(LCD_D7_PIN);
+    gpio_reset_pin(LCD_RS_PIN);
+    gpio_reset_pin(LCD_E_PIN);
+    gpio_reset_pin(LCD_D4_PIN);
+    gpio_reset_pin(LCD_D5_PIN);
+    gpio_reset_pin(LCD_D6_PIN);
+    gpio_reset_pin(LCD_D7_PIN);
 
-    gpio_set_direction(LCD_RS_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(LCD_E_PIN,  GPIO_MODE_OUTPUT);
-    gpio_set_direction(LCD_D4_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(LCD_D5_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(LCD_D6_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(LCD_D7_PIN, GPIO_MODE_OUTPUT);
+    gpio_config_t lcd_config = {    
+        .pin_bit_mask = (1ULL << LCD_RS_PIN) | (1ULL << LCD_E_PIN) |
+                       (1ULL << LCD_D4_PIN) | (1ULL << LCD_D5_PIN) |
+                        (1ULL << LCD_D6_PIN) | (1ULL << LCD_D7_PIN),
+        .mode         = GPIO_MODE_OUTPUT,
+        .pull_up_en   = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type    = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&lcd_config); 
 
     gpio_set_level(LCD_RS_PIN, 0);
     gpio_set_level(LCD_E_PIN,  0);
