@@ -13,9 +13,12 @@
 #include "esp_log.h"
 #include "esp_event.h"
 #include "nvs_flash.h"
+#include "nvs.h"
 #include "esp_netif.h"
 #include "esp_http_server.h"
 #include "rom/ets_sys.h"
+#include "cJSON.h"
+
 
 // C HEADERS
 #include <stdio.h>
@@ -23,6 +26,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <sys/time.h>
+#include <time.h>
+#include <string.h>
+#include <stdio.h>
 
 // STATUS
 typedef struct
@@ -48,21 +55,6 @@ typedef struct
 extern device_status_t g_state;
 extern adc_oneshot_unit_handle_t g_adc1_handle;
 
-// PROFILE
-#define MAX_NAME_LENGTH 32
-#define MAX_IRRIG_TIME_PER_DAY 24
-
-typedef struct
-{
-    char profile_name[MAX_NAME_LENGTH];
-    char plant_name[MAX_NAME_LENGTH];
-    uint8_t irrig_times_per_day;
-    uint16_t times_of_day[MAX_IRRIG_TIME_PER_DAY]; // UNIT IS MINUTES FROM MIDNIGHT
-    uint16_t water_amount_per_irrig;
-    uint8_t moisture_threshold;
-    // COULD ADD MORE CONDITIONAL STUFF LIKE ONLY WATER WHEN TEMP IS ABOVE 0 OR SOMETHING LIKE THAT
-} profile_t;
-
 // TAGS FOR DEBUG
 extern const char *LED_TAG;
 extern const char *PUMP_TAG;
@@ -75,6 +67,8 @@ extern const char *MOIST_TAG;
 extern const char *TANK_TAG;
 extern const char *PIPE_TAG;
 extern const char *GENERAL_TAG;
+extern const char *TIMER_TAG;
+
 
 // SHORTCUT FUNCTIONS
 void delay_ms(uint32_t time);

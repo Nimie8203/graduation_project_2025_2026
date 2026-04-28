@@ -13,6 +13,8 @@ const char *MOIST_TAG = "MOIST_SENS";
 const char *TANK_TAG = "TANK";
 const char *PIPE_TAG = "PIPE";
 const char *GENERAL_TAG = "GENERAL";
+const char *TIMER_TAG = "TIMER";
+
 
 adc_oneshot_unit_handle_t g_adc1_handle = NULL;
 
