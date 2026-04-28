@@ -17,6 +17,7 @@ void app_main(void)
 {
 
     init_monitoring_uart();
+    delay_ms(1000);
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
     {
@@ -72,13 +73,10 @@ void app_main(void)
         ESP_LOGI(TANK_TAG, "%d", g_state.tank_state);
         ESP_LOGI(PIPE_TAG, "%d", g_state.pipe_state);
         ESP_LOGI(GENERAL_TAG, "++++++++++++++");
-        // delay_ms(3000);
+        //delay_ms(1000);
 
-        pump_on(1);
-        pump_on(2);
-        delay_ms(1500);
-        pump_off(1);
-        pump_off(2);
+        //pump_on(1);
+        //pump_on(2);
         delay_ms(1500);
     }
 }
