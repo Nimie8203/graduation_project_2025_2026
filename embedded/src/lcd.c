@@ -1,16 +1,16 @@
 #include "lcd.h"
 
-/* =========================
-   PRIVATE FUNCTIONS
-   ========================= */
+static SemaphoreHandle_t lcd_mutex = NULL;
+
+/* ========================= PRIVATE ========================= */
 
 static void lcd_enable(void)
 {
-    ets_delay_us(1);              // data setup time before rising edge
+    ets_delay_us(1);
     gpio_set_level(LCD_E_PIN, 1);
-    ets_delay_us(1);              // E pulse width — spec says ≥450ns, 1µs is safe
+    ets_delay_us(1);
     gpio_set_level(LCD_E_PIN, 0);
-    ets_delay_us(50);             // execution time — LCD needs ~37-50µs to process nibble
+    ets_delay_us(50);
 }
 
 static void lcd_send_nibble(uint8_t data)
@@ -22,102 +22,108 @@ static void lcd_send_nibble(uint8_t data)
     lcd_enable();
 }
 
-/* =========================
-   LOW-LEVEL FUNCTIONS
-   ========================= */
-
-void lcd_command(uint8_t cmd)
+static void _lcd_command(uint8_t cmd)
 {
-    gpio_set_level(LCD_RS_PIN, 0);   // command mode
+    gpio_set_level(LCD_RS_PIN, 0);
     lcd_send_nibble(cmd >> 4);
     lcd_send_nibble(cmd & 0x0F);
-    ets_delay_us(37);                // most commands need ~37µs
+    ets_delay_us(37);
 }
 
-void lcd_send_data(uint8_t data)
+static void _lcd_send_data(uint8_t data)
 {
-    gpio_set_level(LCD_RS_PIN, 1);   // data mode
+    gpio_set_level(LCD_RS_PIN, 1);
     lcd_send_nibble(data >> 4);
     lcd_send_nibble(data & 0x0F);
     ets_delay_us(37);
 }
 
-/* =========================
-   INITIALIZATION
-   ========================= */
+/* ========================= INIT ========================= */
 
 void lcd_init(void)
 {
-    esp_rom_gpio_pad_select_gpio(LCD_RS_PIN);
-    esp_rom_gpio_pad_select_gpio(LCD_E_PIN);
-    esp_rom_gpio_pad_select_gpio(LCD_D4_PIN);
-    esp_rom_gpio_pad_select_gpio(LCD_D5_PIN);
-    esp_rom_gpio_pad_select_gpio(LCD_D6_PIN);
-    esp_rom_gpio_pad_select_gpio(LCD_D7_PIN);
+    lcd_mutex = xSemaphoreCreateMutex();
 
-    gpio_set_direction(LCD_RS_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(LCD_E_PIN,  GPIO_MODE_OUTPUT);
-    gpio_set_direction(LCD_D4_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(LCD_D5_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(LCD_D6_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(LCD_D7_PIN, GPIO_MODE_OUTPUT);
+    gpio_reset_pin(LCD_RS_PIN);
+    gpio_reset_pin(LCD_E_PIN);
+    gpio_reset_pin(LCD_D4_PIN);
+    gpio_reset_pin(LCD_D5_PIN);
+    gpio_reset_pin(LCD_D6_PIN);
+    gpio_reset_pin(LCD_D7_PIN);
+
+    gpio_config_t lcd_config = {    
+        .pin_bit_mask = (1ULL << LCD_RS_PIN) | (1ULL << LCD_E_PIN) |
+                       (1ULL << LCD_D4_PIN) | (1ULL << LCD_D5_PIN) |
+                        (1ULL << LCD_D6_PIN) | (1ULL << LCD_D7_PIN),
+        .mode         = GPIO_MODE_OUTPUT,
+        .pull_up_en   = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type    = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&lcd_config); 
 
     gpio_set_level(LCD_RS_PIN, 0);
     gpio_set_level(LCD_E_PIN,  0);
 
-    ets_delay_us(50000);  // 50ms power-on wait
-
-    gpio_set_level(LCD_RS_PIN, 0);
-    lcd_send_nibble(0x03);
-    ets_delay_us(5000);   // 5ms
+    ets_delay_us(50000);        // 50ms power-on
 
     lcd_send_nibble(0x03);
-    ets_delay_us(1000);   // 1ms
-
+    ets_delay_us(5000);
     lcd_send_nibble(0x03);
     ets_delay_us(1000);
-
+    lcd_send_nibble(0x03);
+    ets_delay_us(1000);
     lcd_send_nibble(0x02);
     ets_delay_us(1000);
 
-    lcd_command(0x28);
-    lcd_command(0x08);
-    lcd_command(0x01);
-    ets_delay_us(2000);   // 2ms for clear
-    lcd_command(0x06);
-    lcd_command(0x0C);
+    _lcd_command(0x28);         // 4-bit, 2 lines, 5x8 font
+    _lcd_command(0x08);         // display off
+    _lcd_command(0x01);         // clear
+    ets_delay_us(2000);
+    _lcd_command(0x06);         // entry mode
+    _lcd_command(0x0C);         // display on, no cursor
 }
 
-/* =========================
-   HIGH-LEVEL FUNCTIONS
-   ========================= */
+/* ========================= PUBLIC API ========================= */
 
-void lcd_write_char(char c)
+void lcd_command(uint8_t cmd)
 {
-    lcd_send_data(c);
-}
-
-void lcd_write_string(char *str)
-{
-    while (*str)
-    {
-        lcd_write_char(*str);
-        str++;
+    if (xSemaphoreTake(lcd_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        _lcd_command(cmd);
+        xSemaphoreGive(lcd_mutex);
     }
 }
 
 void lcd_set_cursor(uint8_t row, uint8_t col)
 {
-    uint8_t address;
-    if (row == 0)
-        address = 0x80 + col;
-    else
-        address = 0xC0 + col;
-    lcd_command(address);
+    uint8_t address = (row == 0) ? (0x80 + col) : (0xC0 + col);
+    if (xSemaphoreTake(lcd_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        _lcd_command(address);
+        xSemaphoreGive(lcd_mutex);
+    }
+}
+
+void lcd_write_char(char c)
+{
+    if (xSemaphoreTake(lcd_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        _lcd_send_data(c);
+        xSemaphoreGive(lcd_mutex);
+    }
+}
+
+void lcd_write_string(char *str)
+{
+    if (xSemaphoreTake(lcd_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        while (*str) _lcd_send_data(*str++);
+        xSemaphoreGive(lcd_mutex);
+    }
 }
 
 void lcd_clear(void)
 {
-    lcd_command(0x01);
-    delay_ms(2);   // clear is the slowest command — 1.52ms minimum
+    if (xSemaphoreTake(lcd_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        _lcd_command(0x01);
+        delay_ms(2);
+        xSemaphoreGive(lcd_mutex);
+    }
 }

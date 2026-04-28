@@ -10,13 +10,17 @@ const char *HUM_TAG = "DHT_HUM";
 const char *LDR_TAG = "LDR_SENS";
 const char *FLOW_TAG = "FLOW_SENS";
 const char *MOIST_TAG = "MOIST_SENS";
+const char *TANK_TAG = "TANK";
+const char *PIPE_TAG = "PIPE";
 const char *GENERAL_TAG = "GENERAL";
+const char *TIMER_TAG = "TIMER";
 
 adc_oneshot_unit_handle_t g_adc1_handle = NULL;
 
 void init_adc1_shared(void)
 {
-    if (g_adc1_handle != NULL) return;
+    if (g_adc1_handle != NULL)
+        return;
 
     adc_oneshot_unit_init_cfg_t unit_cfg = {
         .unit_id = ADC_UNIT_1,
