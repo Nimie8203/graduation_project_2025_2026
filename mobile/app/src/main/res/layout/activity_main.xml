@@ -58,19 +58,6 @@
 
             </GridLayout>
 
-            <!-- Chart Section -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:orientation="horizontal">
-
-                <include android:id="@+id/chart_temperature" layout="@layout/card_chart" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
-                <Space android:layout_width="16dp" android:layout_height="0dp"/>
-                <include android:id="@+id/chart_humidity" layout="@layout/card_chart" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
-
-            </LinearLayout>
-
             <!-- Navigation Buttons -->
             <Button
                 android:id="@+id/button_open_led_control"
@@ -85,32 +72,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="Manage Profiles" />
-
-            <!-- Recent Alerts -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="Recent Alerts"
-                android:textColor="@android:color/black"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="100dp"
-                android:layout_marginTop="8dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:text="No new alerts"
-                    android:textColor="@android:color/darker_gray" />
-
-            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
     </ScrollView>

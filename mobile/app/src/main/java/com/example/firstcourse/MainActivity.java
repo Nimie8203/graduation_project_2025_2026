@@ -62,11 +62,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-        // Setup Chart Cards
-        setupChartCard(R.id.chart_temperature, "Temperature Trend");
-        setupChartCard(R.id.chart_humidity, "Humidity Levels");
-
         // --- Navigation Buttons --- //
 
         // Setup FAB to open Controls screen
@@ -131,11 +126,4 @@ public class MainActivity extends AppCompatActivity {
         if (iconView != null) iconView.setImageDrawable(ContextCompat.getDrawable(this, iconResId));
     }
 
-    private void setupChartCard(int cardId, String title) {
-        View cardView = findViewById(cardId);
-        TextView titleView = cardView.findViewById(R.id.chart_title);
-        if (titleView != null) {
-            titleView.setText(title);
-        }
-    }
 }
