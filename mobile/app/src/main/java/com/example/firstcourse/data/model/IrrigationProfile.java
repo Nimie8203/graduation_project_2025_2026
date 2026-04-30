@@ -10,25 +10,37 @@ import java.util.List;
  */
 public class IrrigationProfile {
 
+    @SerializedName("profile_name")
+    private String profileName;
+
     @SerializedName("plant_name")
     private String plantName;
 
-    @SerializedName("times_per_day")
+    @SerializedName("irrig_times_per_day")
     private int timesPerDay;
 
     @SerializedName("times_of_day")
-    private List<Integer> timesOfDay; // Assuming HHMM format as a list of integers
+    private List<Integer> timesOfDay;
 
-    @SerializedName("water_amount")
-    private int waterAmount; // in milliliters or some other unit
+    @SerializedName("water_amount_per_irrig")
+    private int waterAmount;
 
     // Constructor, getters, and setters
 
-    public IrrigationProfile(String plantName, int timesPerDay, List<Integer> timesOfDay, int waterAmount) {
+    public IrrigationProfile(String profileName, String plantName, int timesPerDay, List<Integer> timesOfDay, int waterAmount) {
+        this.profileName = profileName;
         this.plantName = plantName;
         this.timesPerDay = timesPerDay;
         this.timesOfDay = timesOfDay;
         this.waterAmount = waterAmount;
+    }
+
+    public String getProfileName() {
+        return profileName;
+    }
+
+    public void setProfileName(String profileName) {
+        this.profileName = profileName;
     }
 
     public String getPlantName() {

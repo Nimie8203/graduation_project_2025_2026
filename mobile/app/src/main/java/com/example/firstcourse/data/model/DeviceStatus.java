@@ -11,33 +11,37 @@ import java.util.List;
  */
 public class DeviceStatus {
 
-    @SerializedName("soil_moisture")
-    private double soilMoisture;
-
     @SerializedName("temperature")
     private double temperature;
 
     @SerializedName("humidity")
     private double humidity;
 
-    @SerializedName("battery_percentage")
-    private int batteryPercentage;
-
     @SerializedName("light_intensity")
     private int lightIntensity;
+
+    @SerializedName("flow_sensor_1")
+    private double flowSensor1;
+
+    @SerializedName("flow_sensor_2")
+    private double flowSensor2;
+
+    @SerializedName("moisture_1")
+    private double moisture1;
+
+    @SerializedName("moisture_2")
+    private double moisture2;
+
+    @SerializedName("moisture_3")
+    private double moisture3;
+
+    @SerializedName("moisture_4")
+    private double moisture4;
 
     @SerializedName("system_alerts")
     private List<String> systemAlerts;
 
     // Getters and setters for all fields
-
-    public double getSoilMoisture() {
-        return soilMoisture;
-    }
-
-    public void setSoilMoisture(double soilMoisture) {
-        this.soilMoisture = soilMoisture;
-    }
 
     public double getTemperature() {
         return temperature;
@@ -55,20 +59,60 @@ public class DeviceStatus {
         this.humidity = humidity;
     }
 
-    public int getBatteryPercentage() {
-        return batteryPercentage;
-    }
-
-    public void setBatteryPercentage(int batteryPercentage) {
-        this.batteryPercentage = batteryPercentage;
-    }
-
     public int getLightIntensity() {
         return lightIntensity;
     }
 
     public void setLightIntensity(int lightIntensity) {
         this.lightIntensity = lightIntensity;
+    }
+
+    public double getFlowSensor1() {
+        return flowSensor1;
+    }
+
+    public void setFlowSensor1(double flowSensor1) {
+        this.flowSensor1 = flowSensor1;
+    }
+
+    public double getFlowSensor2() {
+        return flowSensor2;
+    }
+
+    public void setFlowSensor2(double flowSensor2) {
+        this.flowSensor2 = flowSensor2;
+    }
+
+    public double getMoisture1() {
+        return moisture1;
+    }
+
+    public void setMoisture1(double moisture1) {
+        this.moisture1 = moisture1;
+    }
+
+    public double getMoisture2() {
+        return moisture2;
+    }
+
+    public void setMoisture2(double moisture2) {
+        this.moisture2 = moisture2;
+    }
+
+    public double getMoisture3() {
+        return moisture3;
+    }
+
+    public void setMoisture3(double moisture3) {
+        this.moisture3 = moisture3;
+    }
+
+    public double getMoisture4() {
+        return moisture4;
+    }
+
+    public void setMoisture4(double moisture4) {
+        this.moisture4 = moisture4;
     }
 
     public List<String> getSystemAlerts() {

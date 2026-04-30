@@ -43,15 +43,18 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:columnCount="2"
-                android:rowCount="3"
+                android:rowCount="5"
                 android:useDefaultMargins="true">
 
                 <include android:id="@+id/card_humidity" layout="@layout/card_sensor"/>
                 <include android:id="@+id/card_temperature" layout="@layout/card_sensor"/>
-                <include android:id="@+id/card_soil_moisture" layout="@layout/card_sensor"/>
-                <include android:id="@+id/card_battery" layout="@layout/card_sensor"/>
                 <include android:id="@+id/card_light" layout="@layout/card_sensor"/>
-                <include android:id="@+id/card_air_quality" layout="@layout/card_sensor"/>
+                <include android:id="@+id/card_flow_1" layout="@layout/card_sensor"/>
+                <include android:id="@+id/card_flow_2" layout="@layout/card_sensor"/>
+                <include android:id="@+id/card_moisture_1" layout="@layout/card_sensor"/>
+                <include android:id="@+id/card_moisture_2" layout="@layout/card_sensor"/>
+                <include android:id="@+id/card_moisture_3" layout="@layout/card_sensor"/>
+                <include android:id="@+id/card_moisture_4" layout="@layout/card_sensor"/>
 
             </GridLayout>
 

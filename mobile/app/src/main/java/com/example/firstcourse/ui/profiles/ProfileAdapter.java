@@ -55,10 +55,11 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
      * ViewHolder for a single profile item.
      */
     static class ProfileViewHolder extends RecyclerView.ViewHolder {
-        private final TextView plantName, timesPerDay, waterAmount, timesOfDay;
+        private final TextView profileName, plantName, timesPerDay, waterAmount, timesOfDay;
 
         public ProfileViewHolder(@NonNull View itemView) {
             super(itemView);
+            profileName = itemView.findViewById(R.id.profile_name);
             plantName = itemView.findViewById(R.id.profile_plant_name);
             timesPerDay = itemView.findViewById(R.id.profile_times_per_day);
             waterAmount = itemView.findViewById(R.id.profile_water_amount);
@@ -66,15 +67,18 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
         }
 
         public void bind(IrrigationProfile profile) {
+            profileName.setText(profile.getProfileName());
             plantName.setText(profile.getPlantName());
             timesPerDay.setText(String.format(Locale.getDefault(), "%d times per day", profile.getTimesPerDay()));
-            waterAmount.setText(String.format(Locale.getDefault(), "%.2f L", (double)profile.getWaterAmount()));
+            waterAmount.setText(String.format(Locale.getDefault(), "%d ml", profile.getWaterAmount()));
 
             // Format times of day
             StringBuilder timesString = new StringBuilder("At: ");
             for (int i = 0; i < profile.getTimesOfDay().size(); i++) {
-                int time = profile.getTimesOfDay().get(i);
-                timesString.append(String.format(Locale.getDefault(), "%02d:%02d", time / 100, time % 100));
+                int minuteOfDay = profile.getTimesOfDay().get(i);
+                int hour = minuteOfDay / 60;
+                int minute = minuteOfDay % 60;
+                timesString.append(String.format(Locale.getDefault(), "%02d:%02d", hour, minute));
                 if (i < profile.getTimesOfDay().size() - 1) {
                     timesString.append(", ");
                 }

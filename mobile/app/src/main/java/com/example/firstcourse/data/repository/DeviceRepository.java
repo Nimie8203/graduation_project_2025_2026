@@ -193,11 +193,57 @@ public class DeviceRepository {
     }
 
     public LiveData<ApiResult<Double>> readTemperature() {
-        return readSensorFromStatus("temperature", "Temperature read.");
+        MutableLiveData<ApiResult<Double>> data = new MutableLiveData<>();
+        enqueueJson(apiService.getStatus(), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                if (!isStatusOk(body)) {
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "Temperature request failed."), ApiResult.FailureReason.SERVER_ERROR));
+                    return;
+                }
+
+                Double raw = getNumber(body, "temperature");
+                if (raw == null) {
+                    data.setValue(ApiResult.error("temperature field is missing in /api/status response.", ApiResult.FailureReason.PARSE_ERROR));
+                    return;
+                }
+
+                data.setValue(ApiResult.success(normalizeTenths(raw), "Temperature read."));
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+        return data;
     }
 
     public LiveData<ApiResult<Double>> readHumidity() {
-        return readSensorFromStatus("humidity", "Humidity read.");
+        MutableLiveData<ApiResult<Double>> data = new MutableLiveData<>();
+        enqueueJson(apiService.getStatus(), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                if (!isStatusOk(body)) {
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "Humidity request failed."), ApiResult.FailureReason.SERVER_ERROR));
+                    return;
+                }
+
+                Double raw = getNumber(body, "humidity");
+                if (raw == null) {
+                    data.setValue(ApiResult.error("humidity field is missing in /api/status response.", ApiResult.FailureReason.PARSE_ERROR));
+                    return;
+                }
+
+                data.setValue(ApiResult.success(normalizeTenths(raw), "Humidity read."));
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+        return data;
     }
 
     public LiveData<ApiResult<Double>> readLightIntensity() {
@@ -400,7 +446,12 @@ public class DeviceRepository {
         }
 
         JsonObject payload = new JsonObject();
-        payload.addProperty("profile_name", profile.getPlantName().trim() + " Profile");
+        String profileName = profile.getProfileName();
+        if (profileName == null || profileName.trim().isEmpty()) {
+            profileName = profile.getPlantName().trim() + " Profile";
+        }
+
+        payload.addProperty("profile_name", profileName.trim());
         payload.addProperty("plant_name", profile.getPlantName().trim());
         payload.addProperty("irrig_times_per_day", profile.getTimesPerDay());
         payload.addProperty("water_amount_per_irrig", profile.getWaterAmount());
@@ -465,34 +516,42 @@ public class DeviceRepository {
 
     private DeviceStatus parseDeviceStatus(JsonObject body) {
         DeviceStatus status = new DeviceStatus();
-        status.setTemperature(defaultValue(getNumber(body, "temperature"), 0.0));
-        status.setHumidity(defaultValue(getNumber(body, "humidity"), 0.0));
+        status.setTemperature(normalizeTenths(defaultValue(getNumber(body, "temperature"), 0.0)));
+        status.setHumidity(normalizeTenths(defaultValue(getNumber(body, "humidity"), 0.0)));
         status.setLightIntensity((int) Math.round(defaultValue(getNumber(body, "light_intensity"), 0.0)));
+        status.setFlowSensor1(defaultValue(getNumber(body, "flow_sensor_1"), 0.0));
+        status.setFlowSensor2(defaultValue(getNumber(body, "flow_sensor_2"), 0.0));
+        status.setMoisture1(defaultValue(getNumber(body, "moisture_1"), 0.0));
+        status.setMoisture2(defaultValue(getNumber(body, "moisture_2"), 0.0));
+        status.setMoisture3(defaultValue(getNumber(body, "moisture_3"), 0.0));
+        status.setMoisture4(defaultValue(getNumber(body, "moisture_4"), 0.0));
 
         Double moisture = averageMoisture(body);
-        status.setSoilMoisture(defaultValue(moisture, 0.0));
-
-        // Firmware response currently does not expose battery.
-        status.setBatteryPercentage(0);
+        double avgMoisture = defaultValue(moisture, 0.0);
 
         List<String> alerts = new ArrayList<>();
+        alerts.add(String.format(Locale.getDefault(), "Avg moisture=%.1f%%", avgMoisture));
         alerts.add(String.format(Locale.getDefault(), "LED=%s, Pump1=%s, Pump2=%s",
                 String.valueOf(getBoolean(body, "led")),
                 String.valueOf(getBoolean(body, "pump_1")),
                 String.valueOf(getBoolean(body, "pump_2"))));
-        alerts.add("Battery value is not exposed by firmware; showing 0.");
         status.setSystemAlerts(alerts);
 
         return status;
     }
 
     private IrrigationProfile parseProfile(JsonObject body) {
+        String profileName = getString(body, "profile_name");
         String plantName = getString(body, "plant_name");
         Double timesPerDayRaw = getNumber(body, "irrig_times_per_day");
         Double waterAmountRaw = getNumber(body, "water_amount_per_irrig");
 
         if (plantName == null || timesPerDayRaw == null || waterAmountRaw == null) {
             return null;
+        }
+
+        if (profileName == null || profileName.trim().isEmpty()) {
+            profileName = plantName + " Profile";
         }
 
         List<Integer> times = new ArrayList<>();
@@ -507,6 +566,7 @@ public class DeviceRepository {
         }
 
         return new IrrigationProfile(
+            profileName,
                 plantName,
                 (int) Math.round(timesPerDayRaw),
                 times,
@@ -650,6 +710,10 @@ public class DeviceRepository {
 
     private double defaultValue(Double value, double fallback) {
         return value == null ? fallback : value;
+    }
+
+    private double normalizeTenths(double value) {
+        return Math.abs(value) >= 100.0 ? value / 10.0 : value;
     }
 
     private ApiResult.FailureReason resolveFailureReason(Throwable t) {
