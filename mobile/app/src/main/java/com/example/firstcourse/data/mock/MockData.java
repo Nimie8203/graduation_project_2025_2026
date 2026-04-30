@@ -15,11 +15,15 @@ public class MockData {
 
     public static DeviceStatus getMockDeviceStatus() {
         DeviceStatus status = new DeviceStatus();
-        status.setSoilMoisture(55.5);
         status.setTemperature(23.8);
         status.setHumidity(68.0);
-        status.setBatteryPercentage(85);
         status.setLightIntensity(75);
+        status.setFlowSensor1(2.4);
+        status.setFlowSensor2(2.1);
+        status.setMoisture1(55.5);
+        status.setMoisture2(57.0);
+        status.setMoisture3(53.8);
+        status.setMoisture4(56.2);
         status.setSystemAlerts(new ArrayList<>(Arrays.asList("LOW_BATTERY")));
         return status;
     }
@@ -36,9 +40,9 @@ public class MockData {
      */
     public static List<IrrigationProfile> getMockIrrigationProfiles() {
         List<IrrigationProfile> profiles = new ArrayList<>();
-        profiles.add(new IrrigationProfile("Tomato", 3, new ArrayList<>(Arrays.asList(800, 1200, 1800)), 2));
-        profiles.add(new IrrigationProfile("Cucumber", 4, new ArrayList<>(Arrays.asList(700, 1100, 1500, 1900)), 3));
-        profiles.add(new IrrigationProfile("Strawberry", 2, new ArrayList<>(Arrays.asList(900, 1600)), 1));
+        profiles.add(new IrrigationProfile("Tomato Day Plan", "Tomato", 3, new ArrayList<>(Arrays.asList(480, 720, 1080)), 500));
+        profiles.add(new IrrigationProfile("Cucumber Day Plan", "Cucumber", 4, new ArrayList<>(Arrays.asList(420, 660, 900, 1140)), 600));
+        profiles.add(new IrrigationProfile("Strawberry Day Plan", "Strawberry", 2, new ArrayList<>(Arrays.asList(540, 960)), 400));
         return profiles;
     }
 }
