@@ -82,6 +82,11 @@ esp_err_t status_handler(httpd_req_t *req)
     cJSON_AddNumberToObject(root, "moisture_2",  g_state.moisture_2);
     cJSON_AddNumberToObject(root, "moisture_3",  g_state.moisture_3);
     cJSON_AddNumberToObject(root, "moisture_4",  g_state.moisture_4);
+    cJSON_AddNmberToObject(root, "tank", g_state.tank_state);
+    cJSON_AddNmberToObject(root, "pipe", g_state.pipe_state);
+    cJSON_AddNmberToObject(root, "profile", g_state.profile.profile_name);
+    cJSON_AddNmberToObject(root, "profile", g_state.profile.plant_name);
+    cJSON_AddNmberToObject(root, "profile", g_state.profile.moisture_threshold);
 
     send_json(req, root);
     return ESP_OK;

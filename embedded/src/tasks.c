@@ -24,7 +24,7 @@ static void state_task(void *arg)
         read_ldr();
         read_moisture();
         
-        delay_ms(3000);
+        delay_ms(10000);
     }
 }
 

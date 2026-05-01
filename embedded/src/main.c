@@ -10,6 +10,9 @@
 #include "tasks.h"
 #include "uart.h"
 
+uint8_t line_1_avg = 0;
+uint8_t line_2_avg = 0;
+
 void app_main(void)
 {
     delay_ms(1000);
@@ -50,19 +53,28 @@ void app_main(void)
         ESP_LOGI(PUMP_TAG, "%d", g_state.pump_2_state);
         ESP_LOGI(TANK_TAG, "%d", g_state.tank_state);
         ESP_LOGI(PIPE_TAG, "%d", g_state.pipe_state);
+        ESP_LOGI(PROFILE_TAG, "%s",g_state.profile.profile_name);
+        ESP_LOGI(PROFILE_TAG, "%s", g_state.profile.plant_name);
         ESP_LOGI(GENERAL_TAG, "++++++++++++++");
 
+        line_1_avg = (uint8_t)(g_state.moisture_1 + g_state.moisture_2) / 2;
+        line_2_avg = (uint8_t)(g_state.moisture_3 + g_state.moisture_4) / 2;
 
-        
-
-
-
-        // delay_ms(1000);
-
-        // pump_on(1);
-        // pump_on(2);
-
-
+        if (line_1_avg < g_state.profile.moisture_threshold)
+        {
+            pump_on(1);
+            ESP_LOGI(IRRIG_TAG, "Irrigating line 1");
+        }
+        else if (line_2_avg < g_state.profile.moisture_threshold)
+        {
+            pump_on(2);
+            ESP_LOGI(IRRIG_TAG, "Irrigating line 2");
+        }
+        else
+        {
+            pump_off(1);
+            pump_off(2);
+        }
         delay_ms(1500);
     }
 }
