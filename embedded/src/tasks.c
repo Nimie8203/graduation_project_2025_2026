@@ -1,5 +1,5 @@
 #include "tasks.h"
-
+#include <inttypes.h>
 static void lcd_task(void *arg)
 {
     char line1[17];
@@ -25,10 +25,10 @@ static void lcd_task(void *arg)
 
         // Line 1: "F:99 M:99 L:99  " (16 chars) — flow, moisture, light
 
-        snprintf(line1, sizeof(line1), "F:%-2u M:%-2u L:%-2u ",
-                 flow_average,
-                 moist_average,
-                 g_state.light_intensity);
+        snprintf(line1, sizeof(line1), "F:%-2" PRIu32 " M:%-2" PRIu32 " L:%-2" PRIu32 " ",
+         flow_average,
+         moist_average,
+         g_state.light_intensity);
 
         // Line 2: "T:99 H:99 ......" (16 chars) — temperature, humidity + dots
         snprintf(line2, sizeof(line2), "T:%-2d H:%-2d %s",
