@@ -25,7 +25,7 @@ static void lcd_task(void *arg)
 
         // Line 1: "F:99 M:99 L:99  " (16 chars) — flow, moisture, light
 
-        snprintf(line1, sizeof(line1), "F:%-2lu M:%-2lu L:%-2lu ",
+        snprintf(line1, sizeof(line1), "F:%-2u M:%-2u L:%-2u ",
                  flow_average,
                  moist_average,
                  g_state.light_intensity);
