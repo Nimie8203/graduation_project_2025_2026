@@ -12,8 +12,6 @@
 #include "esp_wifi.h"
 #include "esp_log.h"
 #include "esp_event.h"
-#include "nvs_flash.h"
-#include "nvs.h"
 #include "esp_netif.h"
 #include "esp_http_server.h"
 #include "rom/ets_sys.h"
@@ -34,18 +32,12 @@
 #define MAX_NAME_LENGTH 32
 #define MAX_IRRIG_TIME_PER_DAY 24
 #define MAX_PROFILES 10
-#define NVS_NAMESPACE "profiles"
 
 typedef struct
 {
-    uint8_t id;
     char profile_name[MAX_NAME_LENGTH];
     char plant_name[MAX_NAME_LENGTH];
-    uint8_t irrig_times_per_day;
-    uint16_t times_of_day[MAX_IRRIG_TIME_PER_DAY]; // UNIT IS MINUTES FROM MIDNIGHT
-    uint16_t water_amount_per_irrig;
     uint8_t moisture_threshold;
-    // COULD ADD MORE CONDITIONAL STUFF LIKE ONLY WATER WHEN TEMP IS ABOVE 0 OR SOMETHING LIKE THAT
 } profile_t;
 
 // STATUS
@@ -67,7 +59,6 @@ typedef struct
     bool tank_state;
     bool pipe_state;
     profile_t profile;
-
 } status_t;
 
 extern status_t g_state;

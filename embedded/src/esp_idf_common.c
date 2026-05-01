@@ -13,7 +13,6 @@ const char *MOIST_TAG = "MOIST_SENS";
 const char *TANK_TAG = "TANK";
 const char *PIPE_TAG = "PIPE";
 const char *GENERAL_TAG = "GENERAL";
-const char *TIMER_TAG = "TIMER";
 
 adc_oneshot_unit_handle_t g_adc1_handle = NULL;
 
@@ -30,11 +29,11 @@ void init_states(void)
     g_state.moisture_3 = 0;
     g_state.moisture_4 = 0;
     g_state.light_intensity = 0;
-    g_state.profile = {
-        "default",
-        "general",
-         
-    }
+    g_state.profile = (profile_t){
+        .profile_name = "default",
+        .plant_name = "general",
+        .moisture_threshold = 20
+    };
 }
 
 void init_adc1_shared(void)

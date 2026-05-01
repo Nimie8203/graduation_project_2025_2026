@@ -3,7 +3,6 @@
 // ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
-
 static void send_json(httpd_req_t *req, cJSON *root)
 {
     char *json_str = cJSON_PrintUnformatted(root);
@@ -54,7 +53,6 @@ static esp_err_t read_body(httpd_req_t *req, char *buf, size_t buf_size)
 // ─────────────────────────────────────────────
 // OPTIONS — CORS preflight for all routes
 // ─────────────────────────────────────────────
-
 esp_err_t options_handler(httpd_req_t *req)
 {
     add_cors_headers(req);
@@ -66,7 +64,6 @@ esp_err_t options_handler(httpd_req_t *req)
 // ─────────────────────────────────────────────
 // GET /api/status
 // ─────────────────────────────────────────────
-
 esp_err_t status_handler(httpd_req_t *req)
 {
     add_cors_headers(req);
@@ -95,7 +92,6 @@ esp_err_t status_handler(httpd_req_t *req)
 // Body: {"pump": 1, "state": "on"}
 //       {"source": "web"|"mobile", "state": "on"|"off"}
 // ─────────────────────────────────────────────
-
 esp_err_t pump_handler(httpd_req_t *req)
 {
     add_cors_headers(req);
@@ -171,7 +167,6 @@ esp_err_t pump_handler(httpd_req_t *req)
 // POST /api/led
 // Body: {"state": "on"} or {"state": "off"}
 // ─────────────────────────────────────────────
-
 esp_err_t led_handler(httpd_req_t *req)
 {
     add_cors_headers(req);
@@ -210,7 +205,6 @@ esp_err_t led_handler(httpd_req_t *req)
 // ─────────────────────────────────────────────
 // WIFI EVENT HANDLER
 // ─────────────────────────────────────────────
-
 static void wifi_event_handler(void *arg, esp_event_base_t base,
                                 int32_t event_id, void *event_data)
 {
@@ -229,7 +223,6 @@ static void wifi_event_handler(void *arg, esp_event_base_t base,
 // ─────────────────────────────────────────────
 // SERVER STARTUP
 // ─────────────────────────────────────────────
-
 static httpd_handle_t start_webserver(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
@@ -272,7 +265,6 @@ static httpd_handle_t start_webserver(void)
 // ─────────────────────────────────────────────
 // SOFTAP INIT
 // ─────────────────────────────────────────────
-
 static void wifi_init_softap(void)
 {
     esp_netif_create_default_wifi_ap();
@@ -307,10 +299,8 @@ static void wifi_init_softap(void)
 // ─────────────────────────────────────────────
 // PUBLIC ENTRY POINT
 // ─────────────────────────────────────────────
-
 void init_networking(void)
 {
-    ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     wifi_init_softap();
