@@ -10,6 +10,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_wifi.h"
+#include "nvs_flash.h"
 #include "esp_log.h"
 #include "esp_event.h"
 #include "esp_netif.h"
@@ -28,10 +29,9 @@
 #include <string.h>
 #include <stdio.h>
 
-// PROFILE STUFF
+// PROFILE
 #define MAX_NAME_LENGTH 32
 #define MAX_IRRIG_TIME_PER_DAY 24
-#define MAX_PROFILES 10
 
 typedef struct
 {
@@ -75,8 +75,9 @@ extern const char *FLOW_TAG;
 extern const char *MOIST_TAG;
 extern const char *TANK_TAG;
 extern const char *PIPE_TAG;
+extern const char *PROFILE_TAG;
+extern const char *IRRIG_TAG;
 extern const char *GENERAL_TAG;
-extern const char *TIMER_TAG;
 
 // SHORTCUT FUNCTIONS
 void init_states(void);
