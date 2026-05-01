@@ -15,7 +15,7 @@ uint8_t line_2_avg = 0;
 
 void app_main(void)
 {
-    delay_ms(1000);
+    delay_ms(5000);
     init_monitoring_uart();
     delay_ms(1000);
     esp_err_t ret = nvs_flash_init();
@@ -47,7 +47,7 @@ void app_main(void)
     delay_ms(2000);
     lcd_clear();
     delay_ms(10);
-    
+
     while (1)
     {
         ESP_LOGI(TEMP_TAG, "%d", g_state.temperature);
@@ -70,20 +70,27 @@ void app_main(void)
         line_1_avg = (uint8_t)(g_state.moisture_1 + g_state.moisture_2) / 2;
         line_2_avg = (uint8_t)(g_state.moisture_3 + g_state.moisture_4) / 2;
 
-        if (line_1_avg < g_state.profile.moisture_threshold)
+        if (line_1_avg < g_state.profile.moisture_threshold && line_2_avg < g_state.profile.moisture_threshold)
+        {
+            pump_on(1);
+            pump_on(2);
+            ESP_LOGI(IRRIG_TAG, "Irrigating both lines");
+        }
+        else if (line_1_avg < g_state.profile.moisture_threshold && line_2_avg > g_state.profile.moisture_threshold)
         {
             pump_on(1);
             ESP_LOGI(IRRIG_TAG, "Irrigating line 1");
         }
-        else if (line_2_avg < g_state.profile.moisture_threshold)
+        else if (line_2_avg < g_state.profile.moisture_threshold && line_1_avg > g_state.profile.moisture_threshold)
         {
             pump_on(2);
             ESP_LOGI(IRRIG_TAG, "Irrigating line 2");
         }
-        else
+        else if (line_1_avg > g_state.profile.moisture_threshold && line_2_avg > g_state.profile.moisture_threshold)
         {
             pump_off(1);
             pump_off(2);
+            ESP_LOGI(IRRIG_TAG, "No irrigating");
         }
         delay_ms(1500);
     }

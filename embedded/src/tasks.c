@@ -1,9 +1,10 @@
 #include "tasks.h"
-#include <inttypes.h>
 static void lcd_task(void *arg)
 {
-    char line1[32];
-    char line2[32];
+    delay_ms(10000);
+
+    char line1[17];
+    char line2[17];
 
     const char dot_chars[7][7] = {
         "      ",
@@ -16,25 +17,36 @@ static void lcd_task(void *arg)
     };
 
     uint8_t dot_count = 0;
-    uint32_t flow_average=0;
-    uint32_t moist_average=0;
+    uint32_t flow_average = 0;
+    uint32_t moist_average = 0;
     while (1)
     {
-        flow_average=(uint32_t)(g_state.flow_sens_1+g_state.flow_sens_2)/2;
-        moist_average=(uint32_t)(g_state.moisture_1+g_state.moisture_2+g_state.moisture_3+g_state.moisture_4)/4;
+        flow_average = (uint32_t)(g_state.flow_sens_1 + g_state.flow_sens_2) / 2;
+        moist_average = (uint32_t)(g_state.moisture_1 + g_state.moisture_2 + g_state.moisture_3 + g_state.moisture_4) / 4;
 
-        // Line 1: "F:99 M:99 L:99  " (16 chars) — flow, moisture, light
+        // Clamp to 2-digit display range
+        uint32_t f = flow_average > 99 ? 99 : flow_average;
+        uint32_t m = moist_average > 99 ? 99 : moist_average;
+        unsigned int l = (unsigned int)g_state.light_intensity > 99 ? 99 : (unsigned int)g_state.light_intensity;
 
-       snprintf(line1, sizeof(line1), "F:%-2" PRIu32 " M:%-2" PRIu32 " L:%-2u ",
-         flow_average,
-         moist_average,
-         (unsigned int)g_state.light_intensity);
+        int t = (int)(g_state.temperature / 10);
+        int h = (int)(g_state.humidity / 10);
+        if (t < -9)
+            t = -9;
+        if (t > 99)
+            t = 99;
+        if (h < -9)
+            h = -9;
+        if (h > 99)
+            h = 99;
 
-        // Line 2: "T:99 H:99 ......" (16 chars) — temperature, humidity + dots
+        // Line 1
+        snprintf(line1, sizeof(line1), "F:%-2" PRIu32 " M:%-2" PRIu32 " L:%-2u ",
+                 f, m, l);
+
+        // Line 2
         snprintf(line2, sizeof(line2), "T:%-2d H:%-2d %s",
-                 g_state.temperature,
-                 g_state.humidity,
-                 dot_chars[dot_count]);
+                 t, h, dot_chars[dot_count]);
 
         lcd_set_cursor(0, 0);
         lcd_write_string(line1);
@@ -43,7 +55,6 @@ static void lcd_task(void *arg)
         lcd_write_string(line2);
 
         dot_count = (dot_count + 1) % 7;
-
         delay_ms(300);
     }
 }
@@ -57,7 +68,7 @@ static void state_task(void *arg)
         read_pipe();
         read_ldr();
         read_moisture();
-        
+
         delay_ms(10000);
     }
 }
