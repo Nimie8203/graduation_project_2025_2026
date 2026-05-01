@@ -2,8 +2,8 @@
 #include <inttypes.h>
 static void lcd_task(void *arg)
 {
-    char line1[18];
-    char line2[18];
+    char line1[32];
+    char line2[32];
 
     const char dot_chars[7][7] = {
         "      ",
