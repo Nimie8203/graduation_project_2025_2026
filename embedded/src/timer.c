@@ -5,13 +5,30 @@ static int64_t s_last_sync_unix_ms = 0;
 static int32_t s_last_drift_ms = 0;
 static int32_t s_timezone_offset_min = 0; // Default UTC
 
-void timer_init(void)
+void init_timer(void)
 {
-    // Set to a known zero epoch; clock will drift until first sync
-    struct timeval tv = {.tv_sec = 0, .tv_usec = 0};
+    struct tm fallback = {
+        .tm_year = TIMER_FALLBACK_YEAR - 1900,
+        .tm_mon  = TIMER_FALLBACK_MONTH - 1,
+        .tm_mday = TIMER_FALLBACK_DAY,
+        .tm_hour = TIMER_FALLBACK_HOUR,
+        .tm_min  = TIMER_FALLBACK_MIN,
+        .tm_sec  = 0,
+        .tm_isdst = 0,
+    };
+
+    // mktime treats the struct as local time, so subtract TZ offset to get UTC
+    time_t local_sec = mktime(&fallback);
+    time_t utc_sec   = local_sec - (time_t)(TIMER_FALLBACK_TZ_MIN * 60);
+
+    struct timeval tv = { .tv_sec = utc_sec, .tv_usec = 0 };
     settimeofday(&tv, NULL);
+
+    // Pre-load the timezone so timer_get_formatted() works correctly before sync
+    s_timezone_offset_min = TIMER_FALLBACK_TZ_MIN;
     s_is_synced = false;
-    ESP_LOGI(TIMER_TAG, "Timer initialized (awaiting client sync)");
+
+    ESP_LOGI(TIMER_TAG, "Timer initialized with fallback time (awaiting client sync)");
 }
 
 int64_t timer_get_unix_ms(void)

@@ -40,7 +40,7 @@ static void _lcd_send_data(uint8_t data)
 
 /* ========================= INIT ========================= */
 
-void lcd_init(void)
+void init_lcd(void)
 {
     lcd_mutex = xSemaphoreCreateMutex();
 

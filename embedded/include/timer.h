@@ -2,14 +2,16 @@
 #define TIMER_H
 
 #include "esp_idf_common.h"
-#include <sys/time.h>
-#include <time.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 // --- Configuration ---
 #define TIMER_SYNC_MAX_DRIFT_MS 5000 // Accept sync if drift > 5s
 #define TIMER_SYNC_FORCE_IF_MS 60000 // Force sync if drift > 60s
+#define TIMER_FALLBACK_YEAR   2025
+#define TIMER_FALLBACK_MONTH  6      // 1-12
+#define TIMER_FALLBACK_DAY    1
+#define TIMER_FALLBACK_HOUR   8      // 24h, local time
+#define TIMER_FALLBACK_MIN    0
+#define TIMER_FALLBACK_TZ_MIN 180    // UTC+3 (Turkey), in minutes
 
 // --- Types ---
 typedef struct
@@ -25,10 +27,10 @@ typedef struct
     int32_t last_drift_ms;     // Drift detected at last sync
 } timer_status_t;
 
-void timer_init(void);
+void init_timer(void);
 bool timer_sync_from_client(const timer_sync_payload_t *payload);
 int64_t timer_get_unix_ms(void);
 void timer_get_formatted(char *buf, size_t buflen);
 timer_status_t timer_get_status(void);
 
-#endif // TIMER_H
+#endif

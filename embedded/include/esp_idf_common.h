@@ -19,7 +19,6 @@
 #include "rom/ets_sys.h"
 #include "cJSON.h"
 
-
 // C HEADERS
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,6 +29,24 @@
 #include <time.h>
 #include <string.h>
 #include <stdio.h>
+
+// PROFILE STUFF
+#define MAX_NAME_LENGTH 32
+#define MAX_IRRIG_TIME_PER_DAY 24
+#define MAX_PROFILES 10
+#define NVS_NAMESPACE "profiles"
+
+typedef struct
+{
+    uint8_t id;
+    char profile_name[MAX_NAME_LENGTH];
+    char plant_name[MAX_NAME_LENGTH];
+    uint8_t irrig_times_per_day;
+    uint16_t times_of_day[MAX_IRRIG_TIME_PER_DAY]; // UNIT IS MINUTES FROM MIDNIGHT
+    uint16_t water_amount_per_irrig;
+    uint8_t moisture_threshold;
+    // COULD ADD MORE CONDITIONAL STUFF LIKE ONLY WATER WHEN TEMP IS ABOVE 0 OR SOMETHING LIKE THAT
+} profile_t;
 
 // STATUS
 typedef struct
@@ -49,10 +66,11 @@ typedef struct
     bool wifi_state;
     bool tank_state;
     bool pipe_state;
+    profile_t profile;
 
-} device_status_t;
+} status_t;
 
-extern device_status_t g_state;
+extern status_t g_state;
 extern adc_oneshot_unit_handle_t g_adc1_handle;
 
 // TAGS FOR DEBUG
@@ -69,10 +87,9 @@ extern const char *PIPE_TAG;
 extern const char *GENERAL_TAG;
 extern const char *TIMER_TAG;
 
-
 // SHORTCUT FUNCTIONS
+void init_states(void);
 void delay_ms(uint32_t time);
 void init_adc1_shared(void);
-
 
 #endif
