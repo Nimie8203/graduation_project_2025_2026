@@ -1,6 +1,6 @@
 #include "esp_idf_common.h"
 
-device_status_t g_state = {0};
+status_t g_state = {0};
 
 const char *LED_TAG = "LED";
 const char *PUMP_TAG = "PUMP";
@@ -13,9 +13,28 @@ const char *MOIST_TAG = "MOIST_SENS";
 const char *TANK_TAG = "TANK";
 const char *PIPE_TAG = "PIPE";
 const char *GENERAL_TAG = "GENERAL";
-const char *TIMER_TAG = "TIMER";
 
 adc_oneshot_unit_handle_t g_adc1_handle = NULL;
+
+void init_states(void)
+{
+    g_state.flow_sens_1 = 0;
+    g_state.flow_sens_2 = 0;
+    g_state.pump_1_state = 0;
+    g_state.pump_2_state = 0;
+    g_state.temperature = 0;
+    g_state.humidity = 0;
+    g_state.moisture_1 = 0;
+    g_state.moisture_2 = 0;
+    g_state.moisture_3 = 0;
+    g_state.moisture_4 = 0;
+    g_state.light_intensity = 0;
+    g_state.profile = (profile_t){
+        .profile_name = "default",
+        .plant_name = "general",
+        .moisture_threshold = 20
+    };
+}
 
 void init_adc1_shared(void)
 {

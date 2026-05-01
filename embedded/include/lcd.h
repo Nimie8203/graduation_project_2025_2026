@@ -13,7 +13,7 @@
 
 
 /* 1. Initialization */
-void lcd_init(void);   //Prepares the LCD to work
+void init_lcd(void);   //Prepares the LCD to work
 
 
 /* 2. Configuration */
