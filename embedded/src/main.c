@@ -18,6 +18,13 @@ void app_main(void)
     delay_ms(1000);
     init_monitoring_uart();
     delay_ms(1000);
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
     ESP_LOGI(GENERAL_TAG, "Initializing Devices");
     init_led();
     init_lcd();
@@ -37,7 +44,10 @@ void app_main(void)
     delay_ms(10);
     lcd_set_cursor(0, 0);
     lcd_write_string("READING STATES...");
-
+    delay_ms(2000);
+    lcd_clear();
+    delay_ms(10);
+    
     while (1)
     {
         ESP_LOGI(TEMP_TAG, "%d", g_state.temperature);
@@ -53,7 +63,7 @@ void app_main(void)
         ESP_LOGI(PUMP_TAG, "%d", g_state.pump_2_state);
         ESP_LOGI(TANK_TAG, "%d", g_state.tank_state);
         ESP_LOGI(PIPE_TAG, "%d", g_state.pipe_state);
-        ESP_LOGI(PROFILE_TAG, "%s",g_state.profile.profile_name);
+        ESP_LOGI(PROFILE_TAG, "%s", g_state.profile.profile_name);
         ESP_LOGI(PROFILE_TAG, "%s", g_state.profile.plant_name);
         ESP_LOGI(GENERAL_TAG, "++++++++++++++");
 
