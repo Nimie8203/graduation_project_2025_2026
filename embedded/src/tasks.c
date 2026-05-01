@@ -2,15 +2,49 @@
 
 static void lcd_task(void *arg)
 {
+    char line1[17];
+    char line2[17];
+
+    const char dot_chars[7][7] = {
+        "      ",
+        ".     ",
+        "..    ",
+        "...   ",
+        "....  ",
+        "..... ",
+        "......",
+    };
+
+    uint8_t dot_count = 0;
+    uint32_t flow_average=0;
+    uint32_t moist_average=0;
     while (1)
     {
-        lcd_set_cursor(0, 0);
-        // display g_state values here, e.g.:
-        // char buf[16];
-        // snprintf(buf, sizeof(buf), "T:%d H:%d", g_state.temperature, g_state.humidity);
-        // lcd_write_string(buf);
+        flow_average=(uint32_t)(g_state.flow_sens_1+g_state.flow_sens_2)/2;
+        moist_average=(uint32_t)(g_state.moisture_1+g_state.moisture_2+g_state.moisture_3+g_state.moisture_4)/4;
 
-        delay_ms(1000);
+        // Line 1: "F:99 M:99 L:99  " (16 chars) — flow, moisture, light
+
+        snprintf(line1, sizeof(line1), "F:%-2d M:%-2d L:%-2d ",
+                 flow_average,
+                 moist_average,
+                 g_state.light_intensity);
+
+        // Line 2: "T:99 H:99 ......" (16 chars) — temperature, humidity + dots
+        snprintf(line2, sizeof(line2), "T:%-2d H:%-2d %s",
+                 g_state.temperature,
+                 g_state.humidity,
+                 dot_chars[dot_count]);
+
+        lcd_set_cursor(0, 0);
+        lcd_write_string(line1);
+
+        lcd_set_cursor(1, 0);
+        lcd_write_string(line2);
+
+        dot_count = (dot_count + 1) % 7;
+
+        delay_ms(300);
     }
 }
 static void state_task(void *arg)
