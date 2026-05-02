@@ -56,7 +56,7 @@ void init_moisture(void)
 void read_moisture(void)
 {
     gpio_set_level(MOIST_POWER_PIN, 1);
-    delay_ms(3000);
+    delay_ms(500);
 
     uint16_t m1 = read_median(MOIST_SENS_1_CHANNEL);
     uint16_t m2 = read_median(MOIST_SENS_2_CHANNEL);
@@ -68,5 +68,6 @@ void read_moisture(void)
     g_state.moisture_3 = 100 - ((m3 * 100) / 4096);
     g_state.moisture_4 = 100 - ((m4 * 100) / 4096);
 
+    delay_ms(500);
     gpio_set_level(MOIST_POWER_PIN, 0);
 }
