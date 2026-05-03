@@ -13,6 +13,16 @@ import java.util.List;
  */
 public class MockData {
 
+    // Static list to hold profiles across mock create/delete operations
+    private static final List<IrrigationProfile> mockProfiles = new ArrayList<>();
+
+    static {
+        // Initialize with default profiles
+        mockProfiles.add(new IrrigationProfile("Tomato Day Plan", "Tomato", 3, new ArrayList<>(Arrays.asList(480, 720, 1080)), 500));
+        mockProfiles.add(new IrrigationProfile("Cucumber Day Plan", "Cucumber", 4, new ArrayList<>(Arrays.asList(420, 660, 900, 1140)), 600));
+        mockProfiles.add(new IrrigationProfile("Strawberry Day Plan", "Strawberry", 2, new ArrayList<>(Arrays.asList(540, 960)), 400));
+    }
+
     public static DeviceStatus getDynamicDeviceStatus(long timeMs) {
         double t = timeMs / 1000.0;
 
@@ -93,14 +103,30 @@ public class MockData {
     }
 
     /**
-     * Provides a fake list of IrrigationProfile objects.
-     * @return A list of sample irrigation profiles.
+     * Provides the list of IrrigationProfile objects (including dynamically added profiles).
+     * @return The current list of irrigation profiles.
      */
     public static List<IrrigationProfile> getMockIrrigationProfiles() {
-        List<IrrigationProfile> profiles = new ArrayList<>();
-        profiles.add(new IrrigationProfile("Tomato Day Plan", "Tomato", 3, new ArrayList<>(Arrays.asList(480, 720, 1080)), 500));
-        profiles.add(new IrrigationProfile("Cucumber Day Plan", "Cucumber", 4, new ArrayList<>(Arrays.asList(420, 660, 900, 1140)), 600));
-        profiles.add(new IrrigationProfile("Strawberry Day Plan", "Strawberry", 2, new ArrayList<>(Arrays.asList(540, 960)), 400));
-        return profiles;
+        return new ArrayList<>(mockProfiles);
+    }
+
+    /**
+     * Adds a new profile to the mock profiles list.
+     * @param profile The profile to add.
+     */
+    public static void addMockProfile(IrrigationProfile profile) {
+        if (profile != null) {
+            mockProfiles.add(profile);
+        }
+    }
+
+    /**
+     * Removes a profile by name from the mock profiles list.
+     * @param profileName The name of the profile to remove.
+     */
+    public static void removeMockProfile(String profileName) {
+        if (profileName != null) {
+            mockProfiles.removeIf(p -> p.getProfileName().equals(profileName));
+        }
     }
 }

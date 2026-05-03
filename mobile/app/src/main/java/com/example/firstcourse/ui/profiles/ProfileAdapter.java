@@ -3,6 +3,7 @@ package com.example.firstcourse.ui.profiles;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,6 +21,7 @@ import java.util.Locale;
 public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileViewHolder> {
 
     private final List<IrrigationProfile> profiles = new ArrayList<>();
+    private OnProfileDeleteListener deleteListener;
 
     @NonNull
     @Override
@@ -52,10 +54,19 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
     }
 
     /**
+     * Sets the listener for profile deletion events.
+     * @param listener The listener to be called when a profile is deleted.
+     */
+    public void setDeleteListener(OnProfileDeleteListener listener) {
+        this.deleteListener = listener;
+    }
+
+    /**
      * ViewHolder for a single profile item.
      */
-    static class ProfileViewHolder extends RecyclerView.ViewHolder {
+    class ProfileViewHolder extends RecyclerView.ViewHolder {
         private final TextView profileName, plantName, timesPerDay, waterAmount, timesOfDay;
+        private final Button deleteButton;
 
         public ProfileViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -64,6 +75,7 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
             timesPerDay = itemView.findViewById(R.id.profile_times_per_day);
             waterAmount = itemView.findViewById(R.id.profile_water_amount);
             timesOfDay = itemView.findViewById(R.id.profile_times_of_day);
+            deleteButton = itemView.findViewById(R.id.btn_delete_profile);
         }
 
         public void bind(IrrigationProfile profile) {
@@ -84,6 +96,20 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
                 }
             }
             timesOfDay.setText(timesString.toString());
+
+            // Set delete button listener
+            deleteButton.setOnClickListener(v -> {
+                if (deleteListener != null) {
+                    deleteListener.onProfileDelete(profile.getProfileName());
+                }
+            });
         }
+    }
+
+    /**
+     * Interface for listening to profile deletion events.
+     */
+    public interface OnProfileDeleteListener {
+        void onProfileDelete(String profileName);
     }
 }

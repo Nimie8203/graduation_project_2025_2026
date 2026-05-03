@@ -54,4 +54,13 @@ public class ProfileViewModel extends ViewModel {
     public LiveData<ApiResult<IrrigationProfile>> createProfile(IrrigationProfile profile) {
         return repository.createIrrigationProfile(profile);
     }
+
+    /**
+     * Deletes a profile by name.
+     * @param profileName The name of the profile to delete.
+     * @return LiveData containing the result of the deletion.
+     */
+    public LiveData<ApiResult<Void>> deleteProfile(String profileName) {
+        return repository.deleteIrrigationProfile(profileName);
+    }
 }

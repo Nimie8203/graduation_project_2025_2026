@@ -32,5 +32,5 @@ public interface ApiService {
     Call<JsonObject> createProfile(@Body JsonObject body);
 
     @DELETE("/api/profile")
-    Call<JsonObject> deleteProfile();
+    Call<JsonObject> deleteProfile(@Body JsonObject body);
 }

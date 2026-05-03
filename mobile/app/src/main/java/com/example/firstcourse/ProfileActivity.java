@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class ProfileActivity extends AppCompatActivity {
+public class ProfileActivity extends AppCompatActivity implements ProfileAdapter.OnProfileDeleteListener {
 
     private ProfileViewModel viewModel;
     private ProfileAdapter adapter;
@@ -35,6 +35,7 @@ public class ProfileActivity extends AppCompatActivity {
         // Init ViewModel and Adapter
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
         adapter = new ProfileAdapter();
+        adapter.setDeleteListener(this);
 
         // Setup RecyclerView
         RecyclerView recyclerView = findViewById(R.id.recycler_view_profiles);
@@ -165,5 +166,18 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         throw new NumberFormatException("Invalid time range");
+    }
+
+    @Override
+    public void onProfileDelete(String profileName) {
+        viewModel.deleteProfile(profileName).observe(this, result -> {
+            if (result != null && result.isSuccess()) {
+                Toast.makeText(this, "Profile deleted: " + profileName, Toast.LENGTH_SHORT).show();
+                viewModel.refreshProfiles();
+            } else {
+                String message = result != null ? result.getMessage() : "Profile could not be deleted.";
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

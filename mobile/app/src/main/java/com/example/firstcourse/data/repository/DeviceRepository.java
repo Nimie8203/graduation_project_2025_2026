@@ -27,7 +27,7 @@ import retrofit2.Response;
 
 public class DeviceRepository {
 
-    private static final boolean USE_MOCK_DATA = false;
+    private static final boolean USE_MOCK_DATA = true;
     private static final int DEFAULT_MOISTURE_THRESHOLD = 30;
 
     private static DeviceRepository instance;
@@ -48,7 +48,8 @@ public class DeviceRepository {
         MutableLiveData<ApiResult<DeviceStatus>> data = new MutableLiveData<>();
 
         if (USE_MOCK_DATA) {
-            data.setValue(ApiResult.success(MockData.getMockDeviceStatus(), "Mock device status loaded."));
+            long currentTimeMs = System.currentTimeMillis();
+            data.setValue(ApiResult.success(MockData.getDynamicDeviceStatus(currentTimeMs), "Mock device status loaded."));
             return data;
         }
 
@@ -402,19 +403,37 @@ public class DeviceRepository {
                     return;
                 }
 
-                if (!isStatusOk(body)) {
+                // If device explicitly returned an error status (other than no active profile), fail fast
+                String status = getString(body, "status");
+                if (status != null && "error".equalsIgnoreCase(status)) {
                     data.setValue(ApiResult.error(getDeviceMessage(body, "Profile list request failed."), ApiResult.FailureReason.SERVER_ERROR));
                     return;
                 }
 
-                IrrigationProfile profile = parseProfile(body);
-                if (profile == null) {
+                List<IrrigationProfile> list = new ArrayList<>();
+
+                // Support responses that include an array of profiles
+                JsonElement profilesElem = body != null ? body.get("profiles") : null;
+                if (profilesElem != null && profilesElem.isJsonArray()) {
+                    for (JsonElement e : profilesElem.getAsJsonArray()) {
+                        if (e != null && e.isJsonObject()) {
+                            IrrigationProfile p = parseProfile(e.getAsJsonObject());
+                            if (p != null) list.add(p);
+                        }
+                    }
+                } else if (body != null && body.has("profile") && body.get("profile").isJsonObject()) {
+                    IrrigationProfile p = parseProfile(body.getAsJsonObject("profile"));
+                    if (p != null) list.add(p);
+                } else {
+                    IrrigationProfile p = parseProfile(body);
+                    if (p != null) list.add(p);
+                }
+
+                if (list.isEmpty()) {
                     data.setValue(ApiResult.error("Profile payload could not be parsed.", ApiResult.FailureReason.PARSE_ERROR));
                     return;
                 }
 
-                List<IrrigationProfile> list = new ArrayList<>();
-                list.add(profile);
                 data.setValue(ApiResult.success(list, "Profile list updated."));
             }
 
@@ -431,7 +450,8 @@ public class DeviceRepository {
         MutableLiveData<ApiResult<IrrigationProfile>> data = new MutableLiveData<>();
 
         if (USE_MOCK_DATA) {
-            data.setValue(ApiResult.success(profile, "Mock profile created."));
+            MockData.addMockProfile(profile);
+            data.setValue(ApiResult.success(profile, "Mock profile created and added to list."));
             return data;
         }
 
@@ -468,12 +488,74 @@ public class DeviceRepository {
         enqueueJson(apiService.createProfile(payload), new JsonHandler() {
             @Override
             public void onSuccess(JsonObject body) {
-                if (!isStatusOk(body)) {
-                    data.setValue(ApiResult.error(getDeviceMessage(body, "Profile could not be saved."), ApiResult.FailureReason.SERVER_ERROR));
-                    return;
+                // Some device firmwares return { status: "ok" } while others return
+                // the created profile payload. Accept both styles for compatibility.
+
+                // If status field explicitly indicates failure, treat as error
+                if (body != null) {
+                    String status = getString(body, "status");
+                    if (status != null && "error".equalsIgnoreCase(status)) {
+                        data.setValue(ApiResult.error(getDeviceMessage(body, "Profile could not be saved."), ApiResult.FailureReason.SERVER_ERROR));
+                        return;
+                    }
                 }
 
-                data.setValue(ApiResult.success(profile, "Profile confirmed by device."));
+                // Try to parse returned profile payload; if parsing fails, fall back
+                // to confirming with the original profile (best-effort compatibility).
+                IrrigationProfile parsed = null;
+                try {
+                    parsed = parseProfile(body);
+                } catch (Exception ignored) {
+                }
+
+                if (parsed != null) {
+                    data.setValue(ApiResult.success(parsed, "Profile saved."));
+                } else {
+                    // No profile returned; assume success if HTTP success reached this point.
+                    data.setValue(ApiResult.success(profile, "Profile confirmed by device."));
+                }
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+
+        return data;
+    }
+
+    public LiveData<ApiResult<Void>> deleteIrrigationProfile(String profileName) {
+        MutableLiveData<ApiResult<Void>> data = new MutableLiveData<>();
+
+        if (USE_MOCK_DATA) {
+            MockData.removeMockProfile(profileName);
+            data.setValue(ApiResult.success(null, "Profile deleted from mock."));
+            return data;
+        }
+
+        if (profileName == null || profileName.trim().isEmpty()) {
+            data.setValue(ApiResult.error("Profile name is required.", ApiResult.FailureReason.PARSE_ERROR));
+            return data;
+        }
+
+        JsonObject payload = new JsonObject();
+        payload.addProperty("profile_name", profileName.trim());
+
+        enqueueJson(apiService.deleteProfile(payload), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                // If status field explicitly indicates failure, treat as error
+                if (body != null) {
+                    String status = getString(body, "status");
+                    if (status != null && "error".equalsIgnoreCase(status)) {
+                        data.setValue(ApiResult.error(getDeviceMessage(body, "Profile could not be deleted."), ApiResult.FailureReason.SERVER_ERROR));
+                        return;
+                    }
+                }
+
+                // Assume success if HTTP success reached this point
+                data.setValue(ApiResult.success(null, "Profile deleted."));
             }
 
             @Override
