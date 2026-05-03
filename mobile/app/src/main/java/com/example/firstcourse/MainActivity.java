@@ -16,7 +16,6 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.firstcourse.data.mock.MockData;
 import com.example.firstcourse.data.model.DeviceStatus;
 import com.example.firstcourse.ui.dashboard.AnimatedDashboardView;
 import com.example.firstcourse.data.model.ApiResult;
@@ -29,7 +28,7 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity {
 
     private static final long REFRESH_INTERVAL_MS = 3000L;
-    private static final boolean USE_DYNAMIC_MOCK_DATA = true;
+    private static final boolean USE_DYNAMIC_MOCK_DATA = false;
 
     private DashboardViewModel dashboardViewModel;
     private AnimatedDashboardView animatedDashboardView;
@@ -37,11 +36,8 @@ public class MainActivity extends AppCompatActivity {
     private final Runnable refreshRunnable = new Runnable() {
         @Override
         public void run() {
-            if (USE_DYNAMIC_MOCK_DATA) {
-                updateDashboard(MockData.getDynamicDeviceStatus(System.currentTimeMillis()));
-            } else {
-                dashboardViewModel.refreshDeviceStatus();
-            }
+            // Use real backend refresh. Mock mode is disabled in this build.
+            dashboardViewModel.refreshDeviceStatus();
             refreshHandler.postDelayed(this, REFRESH_INTERVAL_MS);
         }
     };
