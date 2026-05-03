@@ -27,7 +27,7 @@ import retrofit2.Response;
 
 public class DeviceRepository {
 
-    private static final boolean USE_MOCK_DATA = true;
+    private static final boolean USE_MOCK_DATA = false;
     private static final int DEFAULT_MOISTURE_THRESHOLD = 30;
 
     private static DeviceRepository instance;
