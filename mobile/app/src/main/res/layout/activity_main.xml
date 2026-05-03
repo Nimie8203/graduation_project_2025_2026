@@ -37,11 +37,26 @@
                 android:textColor="@android:color/darker_gray"
                 android:textSize="16sp" />
 
+            <com.example.firstcourse.ui.dashboard.AnimatedDashboardView
+                android:id="@+id/animated_dashboard_view"
+                android:layout_width="match_parent"
+                android:layout_height="320dp"
+                android:layout_marginTop="18dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Sensor Readings"
+                android:textColor="@android:color/black"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
             <!-- Sensor Cards Grid -->
             <GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="12dp"
                 android:columnCount="2"
                 android:rowCount="5"
                 android:useDefaultMargins="true">

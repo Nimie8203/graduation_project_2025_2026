@@ -38,6 +38,15 @@ public class DeviceStatus {
     @SerializedName("moisture_4")
     private double moisture4;
 
+    @SerializedName("led")
+    private boolean led;
+
+    @SerializedName("pump_1")
+    private boolean pump1;
+
+    @SerializedName("pump_2")
+    private boolean pump2;
+
     @SerializedName("system_alerts")
     private List<String> systemAlerts;
 
@@ -113,6 +122,30 @@ public class DeviceStatus {
 
     public void setMoisture4(double moisture4) {
         this.moisture4 = moisture4;
+    }
+
+    public boolean isLed() {
+        return led;
+    }
+
+    public void setLed(boolean led) {
+        this.led = led;
+    }
+
+    public boolean isPump1() {
+        return pump1;
+    }
+
+    public void setPump1(boolean pump1) {
+        this.pump1 = pump1;
+    }
+
+    public boolean isPump2() {
+        return pump2;
+    }
+
+    public void setPump2(boolean pump2) {
+        this.pump2 = pump2;
     }
 
     public List<String> getSystemAlerts() {

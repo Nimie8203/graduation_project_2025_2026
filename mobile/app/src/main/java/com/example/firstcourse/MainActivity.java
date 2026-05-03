@@ -16,6 +16,9 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.firstcourse.data.mock.MockData;
+import com.example.firstcourse.data.model.DeviceStatus;
+import com.example.firstcourse.ui.dashboard.AnimatedDashboardView;
 import com.example.firstcourse.data.model.ApiResult;
 import com.example.firstcourse.ui.dashboard.DashboardViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -26,13 +29,19 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity {
 
     private static final long REFRESH_INTERVAL_MS = 3000L;
+    private static final boolean USE_DYNAMIC_MOCK_DATA = true;
 
     private DashboardViewModel dashboardViewModel;
+    private AnimatedDashboardView animatedDashboardView;
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private final Runnable refreshRunnable = new Runnable() {
         @Override
         public void run() {
-            dashboardViewModel.refreshDeviceStatus();
+            if (USE_DYNAMIC_MOCK_DATA) {
+                updateDashboard(MockData.getDynamicDeviceStatus(System.currentTimeMillis()));
+            } else {
+                dashboardViewModel.refreshDeviceStatus();
+            }
             refreshHandler.postDelayed(this, REFRESH_INTERVAL_MS);
         }
     };
@@ -41,6 +50,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        animatedDashboardView = findViewById(R.id.animated_dashboard_view);
 
         // Initialize ViewModel
         dashboardViewModel = new ViewModelProvider(this).get(DashboardViewModel.class);
@@ -52,15 +63,17 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        // Observe LiveData from ViewModel
-        dashboardViewModel.getDeviceStatus().observe(this, result -> {
-            if (result != null && result.isSuccess() && result.getData() != null) {
-                updateDashboard(result.getData());
-            } else {
-                String message = result != null ? result.getMessage() : "Failed to load device status.";
-                Snackbar.make(findViewById(R.id.main), message, Snackbar.LENGTH_LONG).show();
-            }
-        });
+        // Observe LiveData only when backend mode is active.
+        if (!USE_DYNAMIC_MOCK_DATA) {
+            dashboardViewModel.getDeviceStatus().observe(this, result -> {
+                if (result != null && result.isSuccess() && result.getData() != null) {
+                    updateDashboard(result.getData());
+                } else {
+                    String message = result != null ? result.getMessage() : "Failed to load device status.";
+                    Snackbar.make(findViewById(R.id.main), message, Snackbar.LENGTH_LONG).show();
+                }
+            });
+        }
 
         // --- Navigation Buttons --- //
 
@@ -98,7 +111,11 @@ public class MainActivity extends AppCompatActivity {
         refreshHandler.removeCallbacks(refreshRunnable);
     }
 
-    private void updateDashboard(com.example.firstcourse.data.model.DeviceStatus status) {
+    private void updateDashboard(DeviceStatus status) {
+        if (animatedDashboardView != null) {
+            animatedDashboardView.setStatus(status);
+        }
+
         setupSensorCard(R.id.card_humidity, "Humidity", String.format(Locale.getDefault(), "%.1f%%", status.getHumidity()), R.drawable.ic_water_drop);
         setupSensorCard(R.id.card_temperature, "Temperature", String.format(Locale.getDefault(), "%.1f°C", status.getTemperature()), R.drawable.ic_thermostat);
         setupSensorCard(R.id.card_light, "Light Intensity", String.format(Locale.getDefault(), "%d", status.getLightIntensity()), R.drawable.ic_wb_sunny);

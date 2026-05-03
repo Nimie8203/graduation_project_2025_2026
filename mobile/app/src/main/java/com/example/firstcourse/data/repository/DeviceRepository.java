@@ -525,6 +525,9 @@ public class DeviceRepository {
         status.setMoisture2(defaultValue(getNumber(body, "moisture_2"), 0.0));
         status.setMoisture3(defaultValue(getNumber(body, "moisture_3"), 0.0));
         status.setMoisture4(defaultValue(getNumber(body, "moisture_4"), 0.0));
+        status.setLed(Boolean.TRUE.equals(getBoolean(body, "led")));
+        status.setPump1(Boolean.TRUE.equals(getBoolean(body, "pump_1")));
+        status.setPump2(Boolean.TRUE.equals(getBoolean(body, "pump_2")));
 
         Double moisture = averageMoisture(body);
         double avgMoisture = defaultValue(moisture, 0.0);
