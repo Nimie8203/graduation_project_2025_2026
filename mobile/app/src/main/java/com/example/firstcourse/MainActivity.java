@@ -118,13 +118,13 @@ public class MainActivity extends AppCompatActivity {
 
         setupSensorCard(R.id.card_humidity, "Humidity", String.format(Locale.getDefault(), "%.1f%%", status.getHumidity()), R.drawable.ic_water_drop);
         setupSensorCard(R.id.card_temperature, "Temperature", String.format(Locale.getDefault(), "%.1f°C", status.getTemperature()), R.drawable.ic_thermostat);
-        setupSensorCard(R.id.card_light, "Light Intensity", String.format(Locale.getDefault(), "%d", status.getLightIntensity()), R.drawable.ic_wb_sunny);
-        setupSensorCard(R.id.card_flow_1, "Flow Sensor 1", String.format(Locale.getDefault(), "%.1f", status.getFlowSensor1()), R.drawable.ic_water_drop);
-        setupSensorCard(R.id.card_flow_2, "Flow Sensor 2", String.format(Locale.getDefault(), "%.1f", status.getFlowSensor2()), R.drawable.ic_water_drop);
-        setupSensorCard(R.id.card_moisture_1, "Soil Moisture 1", String.format(Locale.getDefault(), "%.1f%%", status.getMoisture1()), R.drawable.ic_spa);
-        setupSensorCard(R.id.card_moisture_2, "Soil Moisture 2", String.format(Locale.getDefault(), "%.1f%%", status.getMoisture2()), R.drawable.ic_spa);
-        setupSensorCard(R.id.card_moisture_3, "Soil Moisture 3", String.format(Locale.getDefault(), "%.1f%%", status.getMoisture3()), R.drawable.ic_spa);
-        setupSensorCard(R.id.card_moisture_4, "Soil Moisture 4", String.format(Locale.getDefault(), "%.1f%%", status.getMoisture4()), R.drawable.ic_spa);
+        setupSensorCard(R.id.card_light, "Light", String.format(Locale.getDefault(), "%d", status.getLightIntensity()), R.drawable.ic_wb_sunny);
+        setupSensorCard(R.id.card_flow_1, "Flow 1", String.format(Locale.getDefault(), "%.1f", status.getFlowSensor1()), R.drawable.ic_water_drop);
+        setupSensorCard(R.id.card_flow_2, "Flow 2", String.format(Locale.getDefault(), "%.1f", status.getFlowSensor2()), R.drawable.ic_water_drop);
+        setupSensorCard(R.id.card_moisture_1, "Soil 1", String.format(Locale.getDefault(), "%.1f%%", status.getMoisture1()), R.drawable.ic_spa);
+        setupSensorCard(R.id.card_moisture_2, "Soil 2", String.format(Locale.getDefault(), "%.1f%%", status.getMoisture2()), R.drawable.ic_spa);
+        setupSensorCard(R.id.card_moisture_3, "Soil 3", String.format(Locale.getDefault(), "%.1f%%", status.getMoisture3()), R.drawable.ic_spa);
+        setupSensorCard(R.id.card_moisture_4, "Soil 4", String.format(Locale.getDefault(), "%.1f%%", status.getMoisture4()), R.drawable.ic_spa);
         
         if (status.getSystemAlerts() != null && !status.getSystemAlerts().isEmpty()) {
             Snackbar.make(findViewById(R.id.main), "Alert: " + status.getSystemAlerts().get(0), Snackbar.LENGTH_LONG).show();
