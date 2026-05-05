@@ -21,12 +21,49 @@ public class ControlsActivity extends AppCompatActivity {
         // Initialize ViewModel
         controlsViewModel = new ViewModelProvider(this).get(ControlsViewModel.class);
 
-        // Setup Manual Irrigation
+        Button pump1Button = findViewById(R.id.button_pump_1);
+        Button pump2Button = findViewById(R.id.button_pump_2);
         Button irrigateNowButton = findViewById(R.id.button_irrigate_now);
+
+        pump1Button.setOnClickListener(v -> {
+            pump1Button.setEnabled(false);
+            pump1Button.setText("Pump 1...");
+
+            controlsViewModel.startPump1().observe(this, result -> {
+                pump1Button.setEnabled(true);
+                pump1Button.setText("Pump 1");
+
+                if (result != null && result.isSuccess() && result.getData() != null) {
+                    Snackbar.make(findViewById(R.id.controls_root), result.getData().getMessage(), Snackbar.LENGTH_LONG).show();
+                } else {
+                    String message = result != null ? result.getMessage() : "Pump 1 request failed.";
+                    Snackbar.make(findViewById(R.id.controls_root), message, Snackbar.LENGTH_LONG).show();
+                }
+            });
+        });
+
+        pump2Button.setOnClickListener(v -> {
+            pump2Button.setEnabled(false);
+            pump2Button.setText("Pump 2...");
+
+            controlsViewModel.startPump2().observe(this, result -> {
+                pump2Button.setEnabled(true);
+                pump2Button.setText("Pump 2");
+
+                if (result != null && result.isSuccess() && result.getData() != null) {
+                    Snackbar.make(findViewById(R.id.controls_root), result.getData().getMessage(), Snackbar.LENGTH_LONG).show();
+                } else {
+                    String message = result != null ? result.getMessage() : "Pump 2 request failed.";
+                    Snackbar.make(findViewById(R.id.controls_root), message, Snackbar.LENGTH_LONG).show();
+                }
+            });
+        });
+
+        // Combined irrigation action
         irrigateNowButton.setOnClickListener(v -> {
             // Disable the button to prevent multiple clicks
             irrigateNowButton.setEnabled(false);
-            irrigateNowButton.setText("Irrigating...");
+            irrigateNowButton.setText("Irrigating All...");
 
             controlsViewModel.irrigateNow().observe(this, result -> {
                 // Re-enable the button

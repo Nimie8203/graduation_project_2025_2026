@@ -36,42 +36,59 @@
             android:hint="Plant Name (e.g., Tomato)" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Threshold: Moisture (0-100) -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edit_text_times_per_day"
+            android:id="@+id/edit_text_moisture_threshold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Times Per Day (e.g., 3)"
+            android:hint="Moisture Threshold (0-100)"
             android:inputType="number" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Threshold: Temperature (-100 .. 100) -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edit_text_times_of_day"
+            android:id="@+id/edit_text_temp_threshold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Times of Day (HHMM, comma-separated)"
-            android:inputType="text" />
+            android:hint="Temperature Threshold (-100..100)"
+            android:inputType="numberSigned" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Threshold: Humidity (0-100) -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edit_text_water_amount"
+            android:id="@+id/edit_text_humidity_threshold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Water Amount (ml, e.g., 500)"
+            android:hint="Humidity Threshold (0-100)"
+            android:inputType="number" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Threshold: Light (0-100) -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_text_light_threshold"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Light Threshold (0-100)"
             android:inputType="number" />
     </com.google.android.material.textfield.TextInputLayout>
 

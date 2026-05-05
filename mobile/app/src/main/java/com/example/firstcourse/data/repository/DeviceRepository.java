@@ -74,37 +74,15 @@ public class DeviceRepository {
     }
 
     public LiveData<ApiResult<IrrigationResponse>> irrigateNow() {
-        MutableLiveData<ApiResult<IrrigationResponse>> data = new MutableLiveData<>();
+        return setPumpCommand("all", true, "Irrigation command sent.", "Pump started for all pumps.");
+    }
 
-        if (USE_MOCK_DATA) {
-            data.setValue(ApiResult.success(MockData.getMockIrrigationResponse(), "Mock irrigation command succeeded."));
-            return data;
-        }
+    public LiveData<ApiResult<IrrigationResponse>> startPump1() {
+        return setPumpCommand("pump_1", true, "Pump 1 command sent.", "Pump 1 started.");
+    }
 
-        JsonObject payload = new JsonObject();
-        payload.addProperty("source", "mobile");
-        payload.addProperty("state", "on");
-
-        enqueueJson(apiService.setPumpState(payload), new JsonHandler() {
-            @Override
-            public void onSuccess(JsonObject body) {
-                if (!isStatusOk(body)) {
-                    data.setValue(ApiResult.error(getDeviceMessage(body, "Pump start command failed."), ApiResult.FailureReason.SERVER_ERROR));
-                    return;
-                }
-
-                IrrigationResponse response = new IrrigationResponse();
-                response.setMessage("Pump started for mobile source.");
-                data.setValue(ApiResult.success(response, "Irrigation command sent."));
-            }
-
-            @Override
-            public void onFailure(ApiResult.FailureReason reason, String message) {
-                data.setValue(ApiResult.error(message, reason));
-            }
-        });
-
-        return data;
+    public LiveData<ApiResult<IrrigationResponse>> startPump2() {
+        return setPumpCommand("pump_2", true, "Pump 2 command sent.", "Pump 2 started.");
     }
 
     public LiveData<ApiResult<IrrigationResponse>> stopIrrigation() {
@@ -125,6 +103,41 @@ public class DeviceRepository {
                 IrrigationResponse response = new IrrigationResponse();
                 response.setMessage("Pump stopped for mobile source.");
                 data.setValue(ApiResult.success(response, "Pump stop command sent."));
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+
+        return data;
+    }
+
+    private LiveData<ApiResult<IrrigationResponse>> setPumpCommand(String pumpId, boolean turnOn, String successMessage, String responseMessage) {
+        MutableLiveData<ApiResult<IrrigationResponse>> data = new MutableLiveData<>();
+
+        if (USE_MOCK_DATA) {
+            data.setValue(ApiResult.success(MockData.getMockIrrigationResponse(), "Mock irrigation command succeeded."));
+            return data;
+        }
+
+        JsonObject payload = new JsonObject();
+        payload.addProperty("source", "mobile");
+        payload.addProperty("state", turnOn ? "on" : "off");
+        payload.addProperty("pump", pumpId);
+
+        enqueueJson(apiService.setPumpState(payload), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                if (!isStatusOk(body)) {
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "Pump command failed."), ApiResult.FailureReason.SERVER_ERROR));
+                    return;
+                }
+
+                IrrigationResponse response = new IrrigationResponse();
+                response.setMessage(responseMessage);
+                data.setValue(ApiResult.success(response, successMessage));
             }
 
             @Override
@@ -390,172 +403,68 @@ public class DeviceRepository {
     public LiveData<ApiResult<List<IrrigationProfile>>> getIrrigationProfiles() {
         MutableLiveData<ApiResult<List<IrrigationProfile>>> data = new MutableLiveData<>();
 
-        if (USE_MOCK_DATA) {
-            data.setValue(ApiResult.success(MockData.getMockIrrigationProfiles(), "Mock profile list loaded."));
-            return data;
-        }
-
-        enqueueJson(apiService.getProfile(), new JsonHandler() {
-            @Override
-            public void onSuccess(JsonObject body) {
-                if (isNoActiveProfile(body)) {
-                    data.setValue(ApiResult.success(new ArrayList<>(), getDeviceMessage(body, "No active profile.")));
-                    return;
-                }
-
-                // If device explicitly returned an error status (other than no active profile), fail fast
-                String status = getString(body, "status");
-                if (status != null && "error".equalsIgnoreCase(status)) {
-                    data.setValue(ApiResult.error(getDeviceMessage(body, "Profile list request failed."), ApiResult.FailureReason.SERVER_ERROR));
-                    return;
-                }
-
-                List<IrrigationProfile> list = new ArrayList<>();
-
-                // Support responses that include an array of profiles
-                JsonElement profilesElem = body != null ? body.get("profiles") : null;
-                if (profilesElem != null && profilesElem.isJsonArray()) {
-                    for (JsonElement e : profilesElem.getAsJsonArray()) {
-                        if (e != null && e.isJsonObject()) {
-                            IrrigationProfile p = parseProfile(e.getAsJsonObject());
-                            if (p != null) list.add(p);
-                        }
-                    }
-                } else if (body != null && body.has("profile") && body.get("profile").isJsonObject()) {
-                    IrrigationProfile p = parseProfile(body.getAsJsonObject("profile"));
-                    if (p != null) list.add(p);
-                } else {
-                    IrrigationProfile p = parseProfile(body);
-                    if (p != null) list.add(p);
-                }
-
-                if (list.isEmpty()) {
-                    data.setValue(ApiResult.error("Profile payload could not be parsed.", ApiResult.FailureReason.PARSE_ERROR));
-                    return;
-                }
-
-                data.setValue(ApiResult.success(list, "Profile list updated."));
-            }
-
-            @Override
-            public void onFailure(ApiResult.FailureReason reason, String message) {
-                data.setValue(ApiResult.error(message, reason));
-            }
-        });
-
+        data.setValue(ApiResult.success(MockData.getMockIrrigationProfiles(), "Profile list loaded from mobile storage."));
         return data;
     }
 
     public LiveData<ApiResult<IrrigationProfile>> createIrrigationProfile(IrrigationProfile profile) {
         MutableLiveData<ApiResult<IrrigationProfile>> data = new MutableLiveData<>();
-
-        if (USE_MOCK_DATA) {
-            MockData.addMockProfile(profile);
-            data.setValue(ApiResult.success(profile, "Mock profile created and added to list."));
+        if (profile == null || profile.getPlantName() == null || profile.getPlantName().trim().isEmpty()) {
+            data.setValue(ApiResult.error("Plant name is required.", ApiResult.FailureReason.PARSE_ERROR));
             return data;
         }
+
+        String profileName = profile.getProfileName();
+        if (profileName == null || profileName.trim().isEmpty()) {
+            profileName = profile.getPlantName().trim() + " Profile";
+            profile.setProfileName(profileName);
+        }
+
+        MockData.addMockProfile(profile);
+        data.setValue(ApiResult.success(profile, "Profile saved on mobile."));
+        return data;
+    }
+
+    public LiveData<ApiResult<Void>> deleteIrrigationProfile(String profileName) {
+        MutableLiveData<ApiResult<Void>> data = new MutableLiveData<>();
+        if (profileName == null || profileName.trim().isEmpty()) {
+            data.setValue(ApiResult.error("Profile name is required.", ApiResult.FailureReason.PARSE_ERROR));
+            return data;
+        }
+        MockData.removeMockProfile(profileName.trim());
+        data.setValue(ApiResult.success(null, "Profile deleted from mobile."));
+        return data;
+    }
+
+    public LiveData<ApiResult<Void>> activateIrrigationProfile(IrrigationProfile profile) {
+        MutableLiveData<ApiResult<Void>> data = new MutableLiveData<>();
 
         if (profile == null || profile.getPlantName() == null || profile.getPlantName().trim().isEmpty()) {
             data.setValue(ApiResult.error("Plant name is required.", ApiResult.FailureReason.PARSE_ERROR));
             return data;
         }
 
-        if (profile.getTimesOfDay() == null || profile.getTimesOfDay().isEmpty()) {
-            data.setValue(ApiResult.error("times_of_day must include at least one value.", ApiResult.FailureReason.PARSE_ERROR));
-            return data;
-        }
-
         JsonObject payload = new JsonObject();
-        String profileName = profile.getProfileName();
-        if (profileName == null || profileName.trim().isEmpty()) {
-            profileName = profile.getPlantName().trim() + " Profile";
-        }
-
-        payload.addProperty("profile_name", profileName.trim());
+        payload.addProperty("profile_name", profile.getProfileName());
         payload.addProperty("plant_name", profile.getPlantName().trim());
-        payload.addProperty("irrig_times_per_day", profile.getTimesPerDay());
-        payload.addProperty("water_amount_per_irrig", profile.getWaterAmount());
-        payload.addProperty("moisture_threshold", DEFAULT_MOISTURE_THRESHOLD);
-
-        JsonArray times = new JsonArray();
-        for (Integer time : profile.getTimesOfDay()) {
-            if (time != null) {
-                times.add(time);
-            }
-        }
-        payload.add("times_of_day", times);
+        payload.addProperty("moisture_threshold", profile.getMoistureThreshold());
+        payload.addProperty("temp_threshold", profile.getTempThreshold());
+        payload.addProperty("humidity_threshold", profile.getHumidityThreshold());
+        payload.addProperty("light_threshold", profile.getLightThreshold());
+        payload.addProperty("action", "active");
 
         enqueueJson(apiService.createProfile(payload), new JsonHandler() {
             @Override
             public void onSuccess(JsonObject body) {
-                // Some device firmwares return { status: "ok" } while others return
-                // the created profile payload. Accept both styles for compatibility.
-
-                // If status field explicitly indicates failure, treat as error
                 if (body != null) {
                     String status = getString(body, "status");
                     if (status != null && "error".equalsIgnoreCase(status)) {
-                        data.setValue(ApiResult.error(getDeviceMessage(body, "Profile could not be saved."), ApiResult.FailureReason.SERVER_ERROR));
+                        data.setValue(ApiResult.error(getDeviceMessage(body, "Profile activation failed."), ApiResult.FailureReason.SERVER_ERROR));
                         return;
                     }
                 }
 
-                // Try to parse returned profile payload; if parsing fails, fall back
-                // to confirming with the original profile (best-effort compatibility).
-                IrrigationProfile parsed = null;
-                try {
-                    parsed = parseProfile(body);
-                } catch (Exception ignored) {
-                }
-
-                if (parsed != null) {
-                    data.setValue(ApiResult.success(parsed, "Profile saved."));
-                } else {
-                    // No profile returned; assume success if HTTP success reached this point.
-                    data.setValue(ApiResult.success(profile, "Profile confirmed by device."));
-                }
-            }
-
-            @Override
-            public void onFailure(ApiResult.FailureReason reason, String message) {
-                data.setValue(ApiResult.error(message, reason));
-            }
-        });
-
-        return data;
-    }
-
-    public LiveData<ApiResult<Void>> deleteIrrigationProfile(String profileName) {
-        MutableLiveData<ApiResult<Void>> data = new MutableLiveData<>();
-
-        if (USE_MOCK_DATA) {
-            MockData.removeMockProfile(profileName);
-            data.setValue(ApiResult.success(null, "Profile deleted from mock."));
-            return data;
-        }
-
-        if (profileName == null || profileName.trim().isEmpty()) {
-            data.setValue(ApiResult.error("Profile name is required.", ApiResult.FailureReason.PARSE_ERROR));
-            return data;
-        }
-
-        JsonObject payload = new JsonObject();
-        payload.addProperty("profile_name", profileName.trim());
-
-        enqueueJson(apiService.deleteProfile(payload), new JsonHandler() {
-            @Override
-            public void onSuccess(JsonObject body) {
-                // If status field explicitly indicates failure, treat as error
-                if (body != null) {
-                    String status = getString(body, "status");
-                    if (status != null && "error".equalsIgnoreCase(status)) {
-                        data.setValue(ApiResult.error(getDeviceMessage(body, "Profile could not be deleted."), ApiResult.FailureReason.SERVER_ERROR));
-                        return;
-                    }
-                }
-
-                // Assume success if HTTP success reached this point
-                data.setValue(ApiResult.success(null, "Profile deleted."));
+                data.setValue(ApiResult.success(null, "Profile thresholds sent to device."));
             }
 
             @Override
@@ -628,10 +537,8 @@ public class DeviceRepository {
     private IrrigationProfile parseProfile(JsonObject body) {
         String profileName = getString(body, "profile_name");
         String plantName = getString(body, "plant_name");
-        Double timesPerDayRaw = getNumber(body, "irrig_times_per_day");
-        Double waterAmountRaw = getNumber(body, "water_amount_per_irrig");
 
-        if (plantName == null || timesPerDayRaw == null || waterAmountRaw == null) {
+        if (plantName == null) {
             return null;
         }
 
@@ -639,24 +546,18 @@ public class DeviceRepository {
             profileName = plantName + " Profile";
         }
 
-        List<Integer> times = new ArrayList<>();
-        JsonElement todElement = body.get("times_of_day");
-        if (todElement != null && todElement.isJsonArray()) {
-            for (JsonElement e : todElement.getAsJsonArray()) {
-                try {
-                    times.add(e.getAsInt());
-                } catch (Exception ignored) {
-                }
-            }
-        }
+        // Read thresholds if provided; otherwise use sensible defaults
+        Double moistureRaw = getNumber(body, "moisture_threshold");
+        Double tempRaw = getNumber(body, "temp_threshold");
+        Double humidityRaw = getNumber(body, "humidity_threshold");
+        Double lightRaw = getNumber(body, "light_threshold");
 
-        return new IrrigationProfile(
-            profileName,
-                plantName,
-                (int) Math.round(timesPerDayRaw),
-                times,
-                (int) Math.round(waterAmountRaw)
-        );
+        int moisture = moistureRaw != null ? (int) Math.round(moistureRaw) : DEFAULT_MOISTURE_THRESHOLD;
+        int temp = tempRaw != null ? (int) Math.round(tempRaw) : 20;
+        int humidity = humidityRaw != null ? (int) Math.round(humidityRaw) : 50;
+        int light = lightRaw != null ? (int) Math.round(lightRaw) : 50;
+
+        return new IrrigationProfile(profileName, plantName, moisture, temp, humidity, light);
     }
 
     private Double averageMoisture(JsonObject body) {
