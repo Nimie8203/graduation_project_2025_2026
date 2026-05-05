@@ -1,12 +1,13 @@
 package com.example.firstcourse.data.model;
 
 import com.google.gson.annotations.SerializedName;
-import java.util.List;
 
 /**
- * Represents an irrigation profile for a specific plant.
- * This POJO is used by Gson to parse and create profile objects from JSON.
- * It's also used to send a new profile to the backend via a POST request.
+ * Represents a mobile-side irrigation profile.
+ * Mobile-only fields: `profileName` and `plantName`.
+ * Thresholds are intended to be sent to the embedded device later
+ * (moisture, temperature, humidity, light). For now they are stored
+ * on the mobile side inside this object.
  */
 public class IrrigationProfile {
 
@@ -16,23 +17,28 @@ public class IrrigationProfile {
     @SerializedName("plant_name")
     private String plantName;
 
-    @SerializedName("irrig_times_per_day")
-    private int timesPerDay;
+    // Thresholds - will be sent to embedded later when supported
+    @SerializedName("moisture_threshold")
+    private int moistureThreshold; // 0-100
 
-    @SerializedName("times_of_day")
-    private List<Integer> timesOfDay;
+    @SerializedName("temp_threshold")
+    private int tempThreshold; // -100 .. +100
 
-    @SerializedName("water_amount_per_irrig")
-    private int waterAmount;
+    @SerializedName("humidity_threshold")
+    private int humidityThreshold; // 0-100
 
-    // Constructor, getters, and setters
+    @SerializedName("light_threshold")
+    private int lightThreshold; // 0-100
 
-    public IrrigationProfile(String profileName, String plantName, int timesPerDay, List<Integer> timesOfDay, int waterAmount) {
+    public IrrigationProfile(String profileName, String plantName,
+                             int moistureThreshold, int tempThreshold,
+                             int humidityThreshold, int lightThreshold) {
         this.profileName = profileName;
         this.plantName = plantName;
-        this.timesPerDay = timesPerDay;
-        this.timesOfDay = timesOfDay;
-        this.waterAmount = waterAmount;
+        this.moistureThreshold = moistureThreshold;
+        this.tempThreshold = tempThreshold;
+        this.humidityThreshold = humidityThreshold;
+        this.lightThreshold = lightThreshold;
     }
 
     public String getProfileName() {
@@ -51,27 +57,35 @@ public class IrrigationProfile {
         this.plantName = plantName;
     }
 
-    public int getTimesPerDay() {
-        return timesPerDay;
+    public int getMoistureThreshold() {
+        return moistureThreshold;
     }
 
-    public void setTimesPerDay(int timesPerDay) {
-        this.timesPerDay = timesPerDay;
+    public void setMoistureThreshold(int moistureThreshold) {
+        this.moistureThreshold = moistureThreshold;
     }
 
-    public List<Integer> getTimesOfDay() {
-        return timesOfDay;
+    public int getTempThreshold() {
+        return tempThreshold;
     }
 
-    public void setTimesOfDay(List<Integer> timesOfDay) {
-        this.timesOfDay = timesOfDay;
+    public void setTempThreshold(int tempThreshold) {
+        this.tempThreshold = tempThreshold;
     }
 
-    public int getWaterAmount() {
-        return waterAmount;
+    public int getHumidityThreshold() {
+        return humidityThreshold;
     }
 
-    public void setWaterAmount(int waterAmount) {
-        this.waterAmount = waterAmount;
+    public void setHumidityThreshold(int humidityThreshold) {
+        this.humidityThreshold = humidityThreshold;
+    }
+
+    public int getLightThreshold() {
+        return lightThreshold;
+    }
+
+    public void setLightThreshold(int lightThreshold) {
+        this.lightThreshold = lightThreshold;
     }
 }

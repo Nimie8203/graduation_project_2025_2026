@@ -29,12 +29,12 @@
             android:textColor="@android:color/darker_gray"
             android:textSize="16sp" />
 
-        <!-- Manual Irrigation Section -->
+        <!-- Pump Controls Section -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Manual Irrigation"
+            android:text="Pump Controls"
             android:textColor="@android:color/black"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -43,15 +43,60 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:text="Trigger a manual irrigation cycle"
+            android:text="Control each pump or trigger both together"
             android:textColor="@android:color/darker_gray"
             android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Pump 1"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/button_pump_1_start"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start Irrigation" />
+
+        <Button
+            android:id="@+id/button_pump_1_stop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Stop Irrigation" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Pump 2"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/button_pump_2_start"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start Irrigation" />
+
+        <Button
+            android:id="@+id/button_pump_2_stop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Stop Irrigation" />
 
         <Button
             android:id="@+id/button_irrigate_now"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Irrigate Now"/>
+            android:layout_marginTop="16dp"
+            android:text="Irrigate Both Pumps"/>
 
     </LinearLayout>
 </ScrollView>

@@ -63,4 +63,13 @@ public class ProfileViewModel extends ViewModel {
     public LiveData<ApiResult<Void>> deleteProfile(String profileName) {
         return repository.deleteIrrigationProfile(profileName);
     }
+
+    /**
+     * Pushes the selected profile thresholds to the device path when requested.
+     * @param profile The active profile.
+     * @return LiveData containing the result of the activation request.
+     */
+    public LiveData<ApiResult<Void>> activateProfile(IrrigationProfile profile) {
+        return repository.activateIrrigationProfile(profile);
+    }
 }

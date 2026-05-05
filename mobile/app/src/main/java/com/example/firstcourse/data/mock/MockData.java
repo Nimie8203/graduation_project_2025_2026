@@ -18,9 +18,10 @@ public class MockData {
 
     static {
         // Initialize with default profiles
-        mockProfiles.add(new IrrigationProfile("Tomato Day Plan", "Tomato", 3, new ArrayList<>(Arrays.asList(480, 720, 1080)), 500));
-        mockProfiles.add(new IrrigationProfile("Cucumber Day Plan", "Cucumber", 4, new ArrayList<>(Arrays.asList(420, 660, 900, 1140)), 600));
-        mockProfiles.add(new IrrigationProfile("Strawberry Day Plan", "Strawberry", 2, new ArrayList<>(Arrays.asList(540, 960)), 400));
+        // Use thresholds: moisture(0-100), temp(-100..100), humidity(0-100), light(0-100)
+        mockProfiles.add(new IrrigationProfile("Tomato Day Plan", "Tomato", 50, 22, 60, 75));
+        mockProfiles.add(new IrrigationProfile("Cucumber Day Plan", "Cucumber", 55, 20, 65, 70));
+        mockProfiles.add(new IrrigationProfile("Strawberry Day Plan", "Strawberry", 48, 18, 62, 68));
     }
 
     public static DeviceStatus getDynamicDeviceStatus(long timeMs) {

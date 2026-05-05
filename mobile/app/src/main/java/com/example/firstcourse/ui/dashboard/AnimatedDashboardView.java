@@ -21,7 +21,7 @@ import java.util.Locale;
 public class AnimatedDashboardView extends View {
 
     private static final int COLOR_BG_DARK = Color.parseColor("#1A2236");
-    private static final int COLOR_BG_LIGHT = Color.parseColor("#FDF7D6");
+    private static final int COLOR_BG_LIGHT = Color.parseColor("#FFF9A8");
     private static final int COLOR_PANEL = Color.parseColor("#EAF0F6");
     private static final int COLOR_WATER = Color.parseColor("#66B7E8");
     private static final int COLOR_TANK = Color.parseColor("#1B1F28");
@@ -161,15 +161,16 @@ public class AnimatedDashboardView extends View {
         float width = getWidth();
         float height = getHeight();
         float lightFactor = clamp01(currentLight / 100f);
+        float easedLight = (float) Math.pow(lightFactor, 0.6f);
 
-        canvas.drawColor(interpolateColor(COLOR_BG_DARK, COLOR_BG_LIGHT, lightFactor));
+        canvas.drawColor(interpolateColor(COLOR_BG_DARK, COLOR_BG_LIGHT, easedLight));
         drawBackgroundGrid(canvas, width, height, 28f);
 
         float leftPadding = dp(12f);
         float topPadding = dp(12f);
         float panelLeft = width * 0.58f;
 
-        drawSun(canvas, leftPadding + dp(54f), topPadding + dp(42f), dp(28f), lightFactor);
+        drawSun(canvas, leftPadding + dp(54f), topPadding + dp(42f), dp(28f), easedLight);
         // Move the tank slightly down to avoid overlapping the sun
         float tankTopOffset = topPadding + dp(110f);
         drawTankAndFlow(canvas, leftPadding, tankTopOffset, panelLeft - leftPadding - dp(12f), height - tankTopOffset - dp(28f));

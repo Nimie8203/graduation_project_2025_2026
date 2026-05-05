@@ -22,6 +22,7 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
 
     private final List<IrrigationProfile> profiles = new ArrayList<>();
     private OnProfileDeleteListener deleteListener;
+    private OnProfileActiveListener activeListener;
 
     @NonNull
     @Override
@@ -61,46 +62,52 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
         this.deleteListener = listener;
     }
 
+    public void setActiveListener(OnProfileActiveListener listener) {
+        this.activeListener = listener;
+    }
+
     /**
      * ViewHolder for a single profile item.
      */
     class ProfileViewHolder extends RecyclerView.ViewHolder {
-        private final TextView profileName, plantName, timesPerDay, waterAmount, timesOfDay;
-        private final Button deleteButton;
+        private final TextView profileName, plantName, timesPerDay, thresholdSummary, timesOfDay;
+        private final Button deleteButton, activeButton;
 
         public ProfileViewHolder(@NonNull View itemView) {
             super(itemView);
             profileName = itemView.findViewById(R.id.profile_name);
             plantName = itemView.findViewById(R.id.profile_plant_name);
             timesPerDay = itemView.findViewById(R.id.profile_times_per_day);
-            waterAmount = itemView.findViewById(R.id.profile_water_amount);
+            thresholdSummary = itemView.findViewById(R.id.profile_threshold_summary);
             timesOfDay = itemView.findViewById(R.id.profile_times_of_day);
             deleteButton = itemView.findViewById(R.id.btn_delete_profile);
+            activeButton = itemView.findViewById(R.id.btn_active_profile);
         }
 
         public void bind(IrrigationProfile profile) {
             profileName.setText(profile.getProfileName());
             plantName.setText(profile.getPlantName());
-            timesPerDay.setText(String.format(Locale.getDefault(), "%d times per day", profile.getTimesPerDay()));
-            waterAmount.setText(String.format(Locale.getDefault(), "%d ml", profile.getWaterAmount()));
+            // Show thresholds instead of irrigation schedule
+            timesPerDay.setText(String.format(Locale.getDefault(), "M:%d T:%d H:%d L:%d",
+                    profile.getMoistureThreshold(), profile.getTempThreshold(),
+                    profile.getHumidityThreshold(), profile.getLightThreshold()));
 
-            // Format times of day
-            StringBuilder timesString = new StringBuilder("At: ");
-            for (int i = 0; i < profile.getTimesOfDay().size(); i++) {
-                int minuteOfDay = profile.getTimesOfDay().get(i);
-                int hour = minuteOfDay / 60;
-                int minute = minuteOfDay % 60;
-                timesString.append(String.format(Locale.getDefault(), "%02d:%02d", hour, minute));
-                if (i < profile.getTimesOfDay().size() - 1) {
-                    timesString.append(", ");
-                }
-            }
-            timesOfDay.setText(timesString.toString());
+            thresholdSummary.setText(String.format(Locale.getDefault(),
+                    "Moisture %d%%  Temp %d°C  Humidity %d%%  Light %d",
+                    profile.getMoistureThreshold(), profile.getTempThreshold(),
+                    profile.getHumidityThreshold(), profile.getLightThreshold()));
+            timesOfDay.setText("Thresholds ready");
 
             // Set delete button listener
             deleteButton.setOnClickListener(v -> {
                 if (deleteListener != null) {
                     deleteListener.onProfileDelete(profile.getProfileName());
+                }
+            });
+
+            activeButton.setOnClickListener(v -> {
+                if (activeListener != null) {
+                    activeListener.onProfileActive(profile);
                 }
             });
         }
@@ -111,5 +118,9 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
      */
     public interface OnProfileDeleteListener {
         void onProfileDelete(String profileName);
+    }
+
+    public interface OnProfileActiveListener {
+        void onProfileActive(IrrigationProfile profile);
     }
 }
