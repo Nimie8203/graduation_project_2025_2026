@@ -1,7 +1,7 @@
 #include "tasks.h"
 static void lcd_task(void *arg)
 {
-    delay_ms(10000);
+    delay_ms(4000);
 
     char line1[17];
     char line2[17];
