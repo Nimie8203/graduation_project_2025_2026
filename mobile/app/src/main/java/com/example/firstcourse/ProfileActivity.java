@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.firstcourse.data.model.ApiResult;
 import com.example.firstcourse.data.model.IrrigationProfile;
 import com.example.firstcourse.ui.profiles.ProfileAdapter;
 import com.example.firstcourse.ui.profiles.ProfileViewModel;
@@ -21,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class ProfileActivity extends AppCompatActivity {
+public class ProfileActivity extends AppCompatActivity implements ProfileAdapter.OnProfileDeleteListener {
 
     private ProfileViewModel viewModel;
     private ProfileAdapter adapter;
@@ -34,15 +35,21 @@ public class ProfileActivity extends AppCompatActivity {
         // Init ViewModel and Adapter
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
         adapter = new ProfileAdapter();
+        adapter.setDeleteListener(this);
 
         // Setup RecyclerView
         RecyclerView recyclerView = findViewById(R.id.recycler_view_profiles);
         recyclerView.setAdapter(adapter);
 
         // Observe profile list changes
-        viewModel.getProfilesLiveData().observe(this, profiles -> {
-            if (profiles != null) {
-                adapter.setProfiles(profiles);
+        viewModel.getProfilesLiveData().observe(this, result -> {
+            if (result != null && result.isSuccess() && result.getData() != null) {
+                adapter.setProfiles(result.getData());
+                if (result.getData().isEmpty() && result.getMessage() != null) {
+                    Toast.makeText(this, result.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            } else if (result != null && result.getMessage() != null) {
+                Toast.makeText(this, result.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -56,6 +63,7 @@ public class ProfileActivity extends AppCompatActivity {
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_create_profile, null);
 
+        final EditText profileName = dialogView.findViewById(R.id.edit_text_profile_name);
         final EditText plantName = dialogView.findViewById(R.id.edit_text_plant_name);
         final EditText timesPerDay = dialogView.findViewById(R.id.edit_text_times_per_day);
         final EditText timesOfDay = dialogView.findViewById(R.id.edit_text_times_of_day);
@@ -65,21 +73,32 @@ public class ProfileActivity extends AppCompatActivity {
                 .setPositiveButton("Create", (dialog, id) -> {
                     // Create profile from dialog input
                     try {
-                        String name = plantName.getText().toString();
+                        String pName = profileName.getText().toString().trim();
+                        String name = plantName.getText().toString().trim();
                         int timesDay = Integer.parseInt(timesPerDay.getText().toString());
                         String[] timesOfDayStr = timesOfDay.getText().toString().split(",");
                         List<Integer> times = new ArrayList<>();
                         for (String t : timesOfDayStr) {
-                            times.add(Integer.parseInt(t.trim()));
+                            times.add(parseTimeToMinutes(t.trim()));
                         }
-                        int amount = (int) (Double.parseDouble(waterAmount.getText().toString()));
+                        int amount = Integer.parseInt(waterAmount.getText().toString());
+
+                        if (TextUtils.isEmpty(pName)) {
+                            Toast.makeText(this, "Profile name cannot be empty", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
 
                         if (TextUtils.isEmpty(name)) {
                             Toast.makeText(this, "Plant name cannot be empty", Toast.LENGTH_SHORT).show();
                             return;
                         }
 
-                        IrrigationProfile newProfile = new IrrigationProfile(name, timesDay, times, amount);
+                        if (times.size() != timesDay) {
+                            Toast.makeText(this, "Times count must match times per day", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        IrrigationProfile newProfile = new IrrigationProfile(pName, name, timesDay, times, amount);
                         createProfile(newProfile);
 
                     } catch (NumberFormatException e) {
@@ -92,24 +111,72 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void createProfile(IrrigationProfile profile) {
-        viewModel.createProfile(profile).observe(this, createdProfile -> {
-            if (createdProfile != null) {
+        viewModel.createProfile(profile).observe(this, result -> {
+            if (result != null && result.isSuccess() && result.getData() != null) {
+                IrrigationProfile createdProfile = result.getData();
                 // In a real app, you would refresh the list from the server.
                 // Here, we just show a toast for confirmation.
-                String result = String.format(Locale.getDefault(),
-                        "Profile was init with: %d times per day, at %s times, a %.2f water amount, with %s name.",
+                String successText = String.format(Locale.getDefault(),
+                    "Profile %s saved: %d times/day, times %s, water %d ml, plant %s.",
+                    createdProfile.getProfileName(),
                         createdProfile.getTimesPerDay(),
                         createdProfile.getTimesOfDay().toString(),
-                        (double) createdProfile.getWaterAmount(),
+                    createdProfile.getWaterAmount(),
                         createdProfile.getPlantName());
 
-                Toast.makeText(this, result, Toast.LENGTH_LONG).show();
+                Toast.makeText(this, successText, Toast.LENGTH_LONG).show();
 
-                // To refresh the list, you might re-fetch or add to the current list
-                viewModel.getProfilesLiveData().observe(this, profiles -> adapter.setProfiles(profiles));
-
+                viewModel.refreshProfiles();
             } else {
-                Toast.makeText(this, "Failed to create profile.", Toast.LENGTH_SHORT).show();
+                String message = result != null ? result.getMessage() : "Profile could not be created.";
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private int parseTimeToMinutes(String token) {
+        if (TextUtils.isEmpty(token)) {
+            throw new NumberFormatException("Empty time");
+        }
+
+        if (token.contains(":")) {
+            String[] parts = token.split(":");
+            if (parts.length != 2) {
+                throw new NumberFormatException("Invalid time");
+            }
+            int hour = Integer.parseInt(parts[0]);
+            int minute = Integer.parseInt(parts[1]);
+            if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+                throw new NumberFormatException("Invalid hh:mm");
+            }
+            return hour * 60 + minute;
+        }
+
+        int value = Integer.parseInt(token);
+        if (value >= 0 && value <= 1439) {
+            return value;
+        }
+
+        if (value >= 0 && value <= 2359) {
+            int hour = value / 100;
+            int minute = value % 100;
+            if (hour < 24 && minute < 60) {
+                return hour * 60 + minute;
+            }
+        }
+
+        throw new NumberFormatException("Invalid time range");
+    }
+
+    @Override
+    public void onProfileDelete(String profileName) {
+        viewModel.deleteProfile(profileName).observe(this, result -> {
+            if (result != null && result.isSuccess()) {
+                Toast.makeText(this, "Profile deleted: " + profileName, Toast.LENGTH_SHORT).show();
+                viewModel.refreshProfiles();
+            } else {
+                String message = result != null ? result.getMessage() : "Profile could not be deleted.";
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
             }
         });
     }

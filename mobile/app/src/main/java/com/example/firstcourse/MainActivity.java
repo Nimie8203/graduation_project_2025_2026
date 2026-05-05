@@ -2,6 +2,8 @@ package com.example.firstcourse;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -14,6 +16,9 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.firstcourse.data.model.DeviceStatus;
+import com.example.firstcourse.ui.dashboard.AnimatedDashboardView;
+import com.example.firstcourse.data.model.ApiResult;
 import com.example.firstcourse.ui.dashboard.DashboardViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -22,12 +27,27 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final long REFRESH_INTERVAL_MS = 3000L;
+    private static final boolean USE_DYNAMIC_MOCK_DATA = false;
+
     private DashboardViewModel dashboardViewModel;
+    private AnimatedDashboardView animatedDashboardView;
+    private final Handler refreshHandler = new Handler(Looper.getMainLooper());
+    private final Runnable refreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+            // Use real backend refresh. Mock mode is disabled in this build.
+            dashboardViewModel.refreshDeviceStatus();
+            refreshHandler.postDelayed(this, REFRESH_INTERVAL_MS);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        animatedDashboardView = findViewById(R.id.animated_dashboard_view);
 
         // Initialize ViewModel
         dashboardViewModel = new ViewModelProvider(this).get(DashboardViewModel.class);
@@ -39,20 +59,17 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        // Observe LiveData from ViewModel
-        dashboardViewModel.getDeviceStatus().observe(this, deviceStatus -> {
-            if (deviceStatus != null) {
-                updateDashboard(deviceStatus);
-            } else {
-                // Show an error message to the user
-                Snackbar.make(findViewById(R.id.main), "Failed to load device status.", Snackbar.LENGTH_LONG).show();
-            }
-        });
-
-
-        // Setup Chart Cards
-        setupChartCard(R.id.chart_temperature, "Temperature Trend");
-        setupChartCard(R.id.chart_humidity, "Humidity Levels");
+        // Observe LiveData only when backend mode is active.
+        if (!USE_DYNAMIC_MOCK_DATA) {
+            dashboardViewModel.getDeviceStatus().observe(this, result -> {
+                if (result != null && result.isSuccess() && result.getData() != null) {
+                    updateDashboard(result.getData());
+                } else {
+                    String message = result != null ? result.getMessage() : "Failed to load device status.";
+                    Snackbar.make(findViewById(R.id.main), message, Snackbar.LENGTH_LONG).show();
+                }
+            });
+        }
 
         // --- Navigation Buttons --- //
 
@@ -78,12 +95,32 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void updateDashboard(com.example.firstcourse.data.model.DeviceStatus status) {
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshHandler.post(refreshRunnable);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        refreshHandler.removeCallbacks(refreshRunnable);
+    }
+
+    private void updateDashboard(DeviceStatus status) {
+        if (animatedDashboardView != null) {
+            animatedDashboardView.setStatus(status);
+        }
+
         setupSensorCard(R.id.card_humidity, "Humidity", String.format(Locale.getDefault(), "%.1f%%", status.getHumidity()), R.drawable.ic_water_drop);
         setupSensorCard(R.id.card_temperature, "Temperature", String.format(Locale.getDefault(), "%.1f°C", status.getTemperature()), R.drawable.ic_thermostat);
-        setupSensorCard(R.id.card_soil_moisture, "Soil Moisture", String.format(Locale.getDefault(), "%.1f%%", status.getSoilMoisture()), R.drawable.ic_spa);
-        setupSensorCard(R.id.card_battery, "Battery Level", String.format(Locale.getDefault(), "%d%%", status.getBatteryPercentage()), R.drawable.ic_battery_full);
-        setupSensorCard(R.id.card_light, "Light Intensity", String.format(Locale.getDefault(), "%d%%", status.getLightIntensity()), R.drawable.ic_wb_sunny);
+        setupSensorCard(R.id.card_light, "Light", String.format(Locale.getDefault(), "%d", status.getLightIntensity()), R.drawable.ic_wb_sunny);
+        setupSensorCard(R.id.card_flow_1, "Flow 1", String.format(Locale.getDefault(), "%.1f", status.getFlowSensor1()), R.drawable.ic_water_drop);
+        setupSensorCard(R.id.card_flow_2, "Flow 2", String.format(Locale.getDefault(), "%.1f", status.getFlowSensor2()), R.drawable.ic_water_drop);
+        setupSensorCard(R.id.card_moisture_1, "Soil 1", String.format(Locale.getDefault(), "%.1f%%", status.getMoisture1()), R.drawable.ic_spa);
+        setupSensorCard(R.id.card_moisture_2, "Soil 2", String.format(Locale.getDefault(), "%.1f%%", status.getMoisture2()), R.drawable.ic_spa);
+        setupSensorCard(R.id.card_moisture_3, "Soil 3", String.format(Locale.getDefault(), "%.1f%%", status.getMoisture3()), R.drawable.ic_spa);
+        setupSensorCard(R.id.card_moisture_4, "Soil 4", String.format(Locale.getDefault(), "%.1f%%", status.getMoisture4()), R.drawable.ic_spa);
         
         if (status.getSystemAlerts() != null && !status.getSystemAlerts().isEmpty()) {
             Snackbar.make(findViewById(R.id.main), "Alert: " + status.getSystemAlerts().get(0), Snackbar.LENGTH_LONG).show();
@@ -102,11 +139,4 @@ public class MainActivity extends AppCompatActivity {
         if (iconView != null) iconView.setImageDrawable(ContextCompat.getDrawable(this, iconResId));
     }
 
-    private void setupChartCard(int cardId, String title) {
-        View cardView = findViewById(cardId);
-        TextView titleView = cardView.findViewById(R.id.chart_title);
-        if (titleView != null) {
-            titleView.setText(title);
-        }
-    }
 }

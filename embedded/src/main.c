@@ -92,6 +92,6 @@ void app_main(void)
             pump_off(2);
             ESP_LOGI(IRRIG_TAG, "No irrigating");
         }
-        delay_ms(1500);
+        delay_ms(2000);
     }
 }
