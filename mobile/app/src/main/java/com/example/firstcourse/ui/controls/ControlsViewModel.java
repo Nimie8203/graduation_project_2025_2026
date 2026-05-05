@@ -35,8 +35,16 @@ public class ControlsViewModel extends ViewModel {
         return repository.startPump1();
     }
 
+    public LiveData<ApiResult<IrrigationResponse>> stopPump1() {
+        return repository.stopPump1();
+    }
+
     public LiveData<ApiResult<IrrigationResponse>> startPump2() {
         return repository.startPump2();
+    }
+
+    public LiveData<ApiResult<IrrigationResponse>> stopPump2() {
+        return repository.stopPump2();
     }
 
     // You could add methods here to handle profile creation/updating in the future.

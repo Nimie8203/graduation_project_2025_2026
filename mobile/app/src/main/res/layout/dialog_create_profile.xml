@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -15,38 +16,55 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp">
+        android:layout_marginTop="16dp"
+        android:hint="Profile Name (e.g., Morning Plan)"
+        app:boxBackgroundMode="outline"
+        app:boxCollapsedPaddingTop="8dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edit_text_profile_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Profile Name (e.g., Morning Plan)" />
+            android:minHeight="48dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:hint="" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="8dp"
+        android:hint="Plant Name (e.g., Tomato)"
+        app:boxBackgroundMode="outline"
+        app:boxCollapsedPaddingTop="8dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edit_text_plant_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Plant Name (e.g., Tomato)" />
+            android:minHeight="48dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:hint="" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <!-- Threshold: Moisture (0-100) -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="8dp"
+        android:hint="Moisture Threshold (0-100)"
+        app:boxBackgroundMode="outline"
+        app:boxCollapsedPaddingTop="8dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edit_text_moisture_threshold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Moisture Threshold (0-100)"
+            android:minHeight="48dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
             android:inputType="number" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -54,13 +72,18 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="8dp"
+        android:hint="Temperature Threshold (-100..100)"
+        app:boxBackgroundMode="outline"
+        app:boxCollapsedPaddingTop="8dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edit_text_temp_threshold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Temperature Threshold (-100..100)"
+            android:minHeight="48dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
             android:inputType="numberSigned" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -68,13 +91,18 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="8dp"
+        android:hint="Humidity Threshold (0-100)"
+        app:boxBackgroundMode="outline"
+        app:boxCollapsedPaddingTop="8dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edit_text_humidity_threshold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Humidity Threshold (0-100)"
+            android:minHeight="48dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
             android:inputType="number" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -82,13 +110,18 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="8dp"
+        android:hint="Light Threshold (0-100)"
+        app:boxBackgroundMode="outline"
+        app:boxCollapsedPaddingTop="8dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edit_text_light_threshold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Light Threshold (0-100)"
+            android:minHeight="48dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
             android:inputType="number" />
     </com.google.android.material.textfield.TextInputLayout>
 

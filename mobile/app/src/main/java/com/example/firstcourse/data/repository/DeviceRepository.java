@@ -74,15 +74,80 @@ public class DeviceRepository {
     }
 
     public LiveData<ApiResult<IrrigationResponse>> irrigateNow() {
-        return setPumpCommand("all", true, "Irrigation command sent.", "Pump started for all pumps.");
+        MutableLiveData<ApiResult<IrrigationResponse>> data = new MutableLiveData<>();
+
+        if (USE_MOCK_DATA) {
+            data.setValue(ApiResult.success(MockData.getMockIrrigationResponse(), "Mock irrigation command succeeded."));
+            return data;
+        }
+
+        // Send ON command to both pumps and aggregate results.
+        JsonObject p1 = new JsonObject();
+        p1.addProperty("source", "mobile");
+        p1.addProperty("state", "on");
+        p1.addProperty("pump", 1);
+
+        JsonObject p2 = new JsonObject();
+        p2.addProperty("source", "mobile");
+        p2.addProperty("state", "on");
+        p2.addProperty("pump", 2);
+
+        final int[] successCount = {0};
+        final String[] errorMsg = {null};
+
+        enqueueJson(apiService.setPumpState(p1), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                successCount[0]++;
+                if (successCount[0] == 2) {
+                    IrrigationResponse response = new IrrigationResponse();
+                    response.setMessage("Both pumps started.");
+                    data.setValue(ApiResult.success(response, "Irrigation command sent to both pumps."));
+                }
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                errorMsg[0] = message;
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+
+        enqueueJson(apiService.setPumpState(p2), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                successCount[0]++;
+                if (successCount[0] == 2) {
+                    IrrigationResponse response = new IrrigationResponse();
+                    response.setMessage("Both pumps started.");
+                    data.setValue(ApiResult.success(response, "Irrigation command sent to both pumps."));
+                }
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                errorMsg[0] = message;
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+
+        return data;
     }
 
     public LiveData<ApiResult<IrrigationResponse>> startPump1() {
         return setPumpCommand("pump_1", true, "Pump 1 command sent.", "Pump 1 started.");
     }
 
+    public LiveData<ApiResult<IrrigationResponse>> stopPump1() {
+        return setPumpCommand("pump_1", false, "Pump 1 stop command sent.", "Pump 1 stopped.");
+    }
+
     public LiveData<ApiResult<IrrigationResponse>> startPump2() {
         return setPumpCommand("pump_2", true, "Pump 2 command sent.", "Pump 2 started.");
+    }
+
+    public LiveData<ApiResult<IrrigationResponse>> stopPump2() {
+        return setPumpCommand("pump_2", false, "Pump 2 stop command sent.", "Pump 2 stopped.");
     }
 
     public LiveData<ApiResult<IrrigationResponse>> stopIrrigation() {
@@ -123,9 +188,18 @@ public class DeviceRepository {
         }
 
         JsonObject payload = new JsonObject();
-        payload.addProperty("source", "mobile");
         payload.addProperty("state", turnOn ? "on" : "off");
-        payload.addProperty("pump", pumpId);
+
+        // When a specific pump is requested, send numeric pump id (1 or 2).
+        // Avoid sending `source` when specifying `pump` because the firmware
+        // interprets `source` strings ("web"/"mobile") as pump selectors.
+        if (pumpId != null && pumpId.startsWith("pump_")) {
+            int num = pumpId.endsWith("_2") ? 2 : 1;
+            payload.addProperty("pump", num);
+        } else {
+            // Fallback: if pumpId isn't of form pump_1/pump_2, include source as mobile
+            payload.addProperty("source", "mobile");
+        }
 
         enqueueJson(apiService.setPumpState(payload), new JsonHandler() {
             @Override

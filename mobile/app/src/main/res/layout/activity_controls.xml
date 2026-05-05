@@ -47,25 +47,56 @@
             android:textColor="@android:color/darker_gray"
             android:textSize="14sp" />
 
-        <Button
-            android:id="@+id/button_pump_1"
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Pump 1"/>
+            android:layout_marginTop="8dp"
+            android:text="Pump 1"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
         <Button
-            android:id="@+id/button_pump_2"
+            android:id="@+id/button_pump_1_start"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start Irrigation" />
+
+        <Button
+            android:id="@+id/button_pump_1_stop"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Pump 2"/>
+            android:text="Stop Irrigation" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Pump 2"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/button_pump_2_start"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start Irrigation" />
+
+        <Button
+            android:id="@+id/button_pump_2_stop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Stop Irrigation" />
 
         <Button
             android:id="@+id/button_irrigate_now"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Irrigate Now"/>
+            android:layout_marginTop="16dp"
+            android:text="Irrigate Both Pumps"/>
 
     </LinearLayout>
 </ScrollView>
