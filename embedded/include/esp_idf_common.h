@@ -30,14 +30,16 @@
 #include <stdio.h>
 
 // PROFILE
-#define MAX_NAME_LENGTH 32
-#define MAX_IRRIG_TIME_PER_DAY 24
 
 typedef struct
 {
-    char profile_name[MAX_NAME_LENGTH];
-    char plant_name[MAX_NAME_LENGTH];
-    uint8_t moisture_threshold;
+    uint8_t light_threshold;
+    uint8_t moist_upper;
+    uint8_t moist_lower;
+    uint8_t temp_upper; 
+    uint8_t temp_lower;
+    uint8_t hum_upper;
+    uint8_t hum_lower;  
 } profile_t;
 
 // STATUS
@@ -58,6 +60,8 @@ typedef struct
     bool wifi_state;
     bool tank_state;
     bool pipe_state;
+    bool pump_1_triggered;
+    bool pump_2_triggered;
     profile_t profile;
 } status_t;
 
