@@ -13,6 +13,12 @@
 uint8_t line_1_avg = 0;
 uint8_t line_2_avg = 0;
 
+const uint8_t OFFSET_HOT_DRY = 20;
+const uint8_t OFFSET_HOT_HUMID = 8;
+const uint8_t OFFSET_COLD_DRY = 5;
+const uint8_t OFFSET_COLD_WET = 15;
+int16_t irrig_amount = 0;
+
 void app_main(void)
 {
     delay_ms(5000);
@@ -61,36 +67,159 @@ void app_main(void)
         ESP_LOGI(MOIST_TAG, "%d", g_state.moisture_4);
         ESP_LOGI(PUMP_TAG, "%d", g_state.pump_1_state);
         ESP_LOGI(PUMP_TAG, "%d", g_state.pump_2_state);
+        ESP_LOGI(PUMP_TAG, "%d", g_state.pump_1_triggered);
+        ESP_LOGI(PUMP_TAG, "%d", g_state.pump_2_triggered);
         ESP_LOGI(TANK_TAG, "%d", g_state.tank_state);
         ESP_LOGI(PIPE_TAG, "%d", g_state.pipe_state);
-        ESP_LOGI(PROFILE_TAG, "%s", g_state.profile.profile_name);
-        ESP_LOGI(PROFILE_TAG, "%s", g_state.profile.plant_name);
         ESP_LOGI(GENERAL_TAG, "++++++++++++++");
 
         line_1_avg = (uint8_t)(g_state.moisture_1 + g_state.moisture_2) / 2;
         line_2_avg = (uint8_t)(g_state.moisture_3 + g_state.moisture_4) / 2;
 
-        if (line_1_avg < g_state.profile.moisture_threshold && line_2_avg < g_state.profile.moisture_threshold)
+        if (irrig_amount == line_1_avg && irrig_amount == line_2_avg)
         {
-            pump_on(1);
-            pump_on(2);
-            ESP_LOGI(IRRIG_TAG, "Irrigating both lines");
+            pump_off(1);
+            pump_off(1);
+            g_state.pump_1_triggered = false;
+            g_state.pump_2_triggered = false;
         }
-        else if (line_1_avg < g_state.profile.moisture_threshold && line_2_avg > g_state.profile.moisture_threshold)
+        else if (irrig_amount == line_1_avg)
         {
-            pump_on(1);
-            ESP_LOGI(IRRIG_TAG, "Irrigating line 1");
+            pump_off(1);
+            g_state.pump_1_triggered = false;
         }
-        else if (line_2_avg < g_state.profile.moisture_threshold && line_1_avg > g_state.profile.moisture_threshold)
+        else if (irrig_amount == line_2_avg)
         {
-            pump_on(2);
-            ESP_LOGI(IRRIG_TAG, "Irrigating line 2");
+            pump_off(2);
+            g_state.pump_2_triggered = false;
         }
-        else if (line_1_avg > g_state.profile.moisture_threshold && line_2_avg > g_state.profile.moisture_threshold)
+
+        if (g_state.light_intensity > g_state.profile.light_threshold)
         {
             pump_off(1);
             pump_off(2);
-            ESP_LOGI(IRRIG_TAG, "No irrigating");
+            g_state.pump_1_triggered = false;
+            g_state.pump_2_triggered = false;
+            continue;
+        }
+
+        if (g_state.temperature >= g_state.profile.temp_upper && g_state.humidity <= g_state.profile.hum_lower)
+        {
+            irrig_amount = g_state.profile.moist_upper + OFFSET_HOT_DRY;
+            if (irrig_amount >= 100)
+                irrig_amount = 100;
+            if (line_1_avg <= g_state.profile.moist_lower && line_2_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_1_triggered = true;
+                g_state.pump_2_triggered = true;
+            }
+            else if (line_1_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_1_triggered = true;
+            }
+            else if (line_2_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_2_triggered = true;
+            }
+        }
+        else if (g_state.temperature >= g_state.profile.temp_upper && g_state.humidity >= g_state.profile.hum_upper)
+        {
+            irrig_amount = g_state.profile.moist_upper + OFFSET_HOT_HUMID;
+            if (irrig_amount >= 100)
+                irrig_amount = 100;
+
+            if (line_1_avg <= g_state.profile.moist_lower && line_2_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_1_triggered = true;
+                g_state.pump_2_triggered = true;
+            }
+            else if (line_1_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_1_triggered = true;
+            }
+            else if (line_2_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_2_triggered = true;
+            }
+        }
+        else if (g_state.temperature <= g_state.profile.temp_lower && g_state.humidity <= g_state.profile.hum_lower)
+        {
+            irrig_amount = g_state.profile.moist_lower - OFFSET_COLD_DRY;
+            if (irrig_amount >= 100)
+                irrig_amount = 100;
+
+            if (line_1_avg <= g_state.profile.moist_lower && line_2_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_1_triggered = true;
+                g_state.pump_2_triggered = true;
+            }
+            else if (line_1_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_1_triggered = true;
+            }
+            else if (line_2_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_2_triggered = true;
+            }
+        }
+        else if (g_state.temperature <= g_state.profile.temp_lower && g_state.humidity >= g_state.profile.hum_upper)
+        {
+            irrig_amount = g_state.profile.moist_upper - OFFSET_COLD_WET;
+            if (irrig_amount >= 100)
+                irrig_amount = 100;
+
+            if (line_1_avg <= g_state.profile.moist_lower && line_2_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_1_triggered = true;
+                g_state.pump_2_triggered = true;
+            }
+            else if (line_1_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_1_triggered = true;
+            }
+            else if (line_2_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_2_triggered = true;
+            }
+        }
+        else
+        {
+            irrig_amount = g_state.profile.moist_upper;
+
+            if (irrig_amount >= 100)
+                irrig_amount = 100;
+
+            if (line_1_avg <= g_state.profile.moist_lower && line_2_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_1_triggered = true;
+                g_state.pump_2_triggered = true;
+            }
+            else if (line_1_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_1_triggered = true;
+            }
+            else if (line_2_avg <= g_state.profile.moist_lower)
+            {
+                g_state.pump_2_triggered = true;
+            }
+        }
+
+        if (g_state.pump_1_triggered && g_state.pump_2_triggered)
+        {
+            pump_on(1);
+            pump_on(2);
+        }
+        else if (g_state.pump_1_triggered)
+        {
+            pump_on(1);
+        }
+        else if (g_state.pump_2_triggered)
+        {
+            pump_on(2);
+        }
+        else
+        {
+            continue;
         }
         delay_ms(2000);
     }

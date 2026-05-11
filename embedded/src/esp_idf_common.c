@@ -32,9 +32,13 @@ void init_states(void)
     g_state.moisture_4 = 0;
     g_state.light_intensity = 0;
     g_state.profile = (profile_t){
-        .profile_name = "default",
-        .plant_name = "general",
-        .moisture_threshold = 20
+        .moist_upper = 80,
+        .moist_lower = 20,
+        .temp_upper= 40, 
+        .temp_lower= 5,
+        .light_threshold = 85,
+        .hum_upper= 60,
+        .hum_lower=20
     };
 }
 
