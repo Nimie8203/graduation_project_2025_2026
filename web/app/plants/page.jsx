@@ -4,6 +4,57 @@ import { useState, useEffect } from 'react';
 import { sendPlantProfile } from '@/lib/espApi';
 import { useEspConnection } from '@/lib/useEspConnection';
 
+const EMPTY_FORM = {
+  profileName: '',
+  plantName: '',
+  moistureUpper: '80',
+  moistureLower: '20',
+  tempUpper: '35',
+  tempLower: '5',
+  humidityUpper: '70',
+  humidityLower: '30',
+  lightThreshold: '50',
+};
+
+// ── Defined outside Plants so it never gets recreated on re-render ──
+// (defining it inside would cause React to unmount/remount the input
+//  on every keystroke, stealing focus after each character)
+function RangeRow({ label, lowerKey, upperKey, min, max, formData, setFormData }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        {label} ({min} – {max})
+      </label>
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Lower</label>
+          <input
+            type="number"
+            min={min}
+            max={max}
+            value={formData[lowerKey]}
+            onChange={(e) => setFormData((prev) => ({ ...prev, [lowerKey]: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            required
+          />
+        </div>
+        <div className="flex-1">
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Upper</label>
+          <input
+            type="number"
+            min={min}
+            max={max}
+            value={formData[upperKey]}
+            onChange={(e) => setFormData((prev) => ({ ...prev, [upperKey]: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            required
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Plants() {
   const { isConnected } = useEspConnection();
   const [profiles, setProfiles] = useState([]);
@@ -12,31 +63,20 @@ export default function Plants() {
   const [message, setMessage] = useState({ type: null, text: '' });
   const [showForm, setShowForm] = useState(false);
   const [editingProfile, setEditingProfile] = useState(null);
-  const [formData, setFormData] = useState({
-    profileName: '',
-    plantName: '',
-    moistureThreshold: 50,
-    temperatureThreshold: 25,
-    humidityThreshold: 50,
-    lightThreshold: 50,
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
   // Load profiles from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem('plantThresholdProfiles');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        setProfiles(parsed);
+        setProfiles(JSON.parse(saved));
       } catch (error) {
         console.error('Error loading profiles:', error);
       }
     }
-
     const activeId = localStorage.getItem('activePlantThresholdProfile');
-    if (activeId) {
-      setActiveProfileId(activeId);
-    }
+    if (activeId) setActiveProfileId(activeId);
   }, []);
 
   const saveProfiles = (newProfiles) => {
@@ -54,28 +94,46 @@ export default function Plants() {
       setMessage({ type: 'error', text: 'Profile name is required' });
       return false;
     }
-
     if (!formData.plantName.trim()) {
       setMessage({ type: 'error', text: 'Plant name is required' });
       return false;
     }
 
-    if (formData.moistureThreshold < 0 || formData.moistureThreshold > 100) {
-      setMessage({ type: 'error', text: 'Moisture threshold must be between 0 and 100' });
+    // Parse all numeric fields once
+    const n = {
+      moistureLower:  Number(formData.moistureLower),
+      moistureUpper:  Number(formData.moistureUpper),
+      tempLower:      Number(formData.tempLower),
+      tempUpper:      Number(formData.tempUpper),
+      humidityLower:  Number(formData.humidityLower),
+      humidityUpper:  Number(formData.humidityUpper),
+      lightThreshold: Number(formData.lightThreshold),
+    };
+
+    // Check none are NaN (empty field)
+    if (Object.values(n).some(isNaN)) {
+      setMessage({ type: 'error', text: 'All threshold fields must be valid numbers' });
       return false;
     }
 
-    if (formData.temperatureThreshold < -100 || formData.temperatureThreshold > 100) {
-      setMessage({ type: 'error', text: 'Temperature threshold must be between -100 and 100' });
-      return false;
+    const checks = [
+      { min: 0,    max: 100,  lower: n.moistureLower,  upper: n.moistureUpper,  label: 'Moisture' },
+      { min: -100, max: 100,  lower: n.tempLower,      upper: n.tempUpper,      label: 'Temperature' },
+      { min: 0,    max: 100,  lower: n.humidityLower,  upper: n.humidityUpper,  label: 'Humidity' },
+    ];
+
+    for (const { min, max, lower, upper, label } of checks) {
+      if (lower < min || lower > max || upper < min || upper > max) {
+        setMessage({ type: 'error', text: `${label} values must be between ${min} and ${max}` });
+        return false;
+      }
+      if (lower >= upper) {
+        setMessage({ type: 'error', text: `${label} lower threshold must be less than upper threshold` });
+        return false;
+      }
     }
 
-    if (formData.humidityThreshold < 0 || formData.humidityThreshold > 100) {
-      setMessage({ type: 'error', text: 'Humidity threshold must be between 0 and 100' });
-      return false;
-    }
-
-    if (formData.lightThreshold < 0 || formData.lightThreshold > 100) {
+    if (n.lightThreshold < 0 || n.lightThreshold > 100) {
       setMessage({ type: 'error', text: 'Light threshold must be between 0 and 100' });
       return false;
     }
@@ -86,24 +144,27 @@ export default function Plants() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setMessage({ type: null, text: '' });
+    if (!validateForm()) return;
 
-    if (!validateForm()) {
-      return;
-    }
+    // Coerce string inputs to numbers for storage
+    const parsed = {
+      ...formData,
+      moistureUpper:  Number(formData.moistureUpper),
+      moistureLower:  Number(formData.moistureLower),
+      tempUpper:      Number(formData.tempUpper),
+      tempLower:      Number(formData.tempLower),
+      humidityUpper:  Number(formData.humidityUpper),
+      humidityLower:  Number(formData.humidityLower),
+      lightThreshold: Number(formData.lightThreshold),
+    };
 
     const newProfiles = [...profiles];
 
     if (editingProfile) {
       const index = newProfiles.findIndex((p) => p.id === editingProfile.id);
-      if (index !== -1) {
-        newProfiles[index] = { ...editingProfile, ...formData };
-      }
+      if (index !== -1) newProfiles[index] = { ...editingProfile, ...parsed };
     } else {
-      const newProfile = {
-        id: Date.now().toString(),
-        ...formData,
-      };
-      newProfiles.push(newProfile);
+      newProfiles.push({ id: Date.now().toString(), ...parsed });
     }
 
     saveProfiles(newProfiles);
@@ -112,41 +173,43 @@ export default function Plants() {
   };
 
   const resetForm = () => {
-    setFormData({
-      profileName: '',
-      plantName: '',
-      moistureThreshold: 50,
-      temperatureThreshold: 25,
-      humidityThreshold: 50,
-      lightThreshold: 50,
-    });
+    setFormData(EMPTY_FORM);
     setEditingProfile(null);
     setShowForm(false);
   };
 
   const handleEdit = (profile) => {
+    // Deactivate if this is the currently active profile
+    if (activeProfileId === profile.id) {
+      setActiveProfileId(null);
+      localStorage.removeItem('activePlantThresholdProfile');
+      setMessage({ type: 'warning', text: 'Profile deactivated for editing. Set it active again after saving.' });
+    }
+
     setEditingProfile(profile);
+    // Store as strings so number inputs stay editable without fighting the cursor
     setFormData({
-      profileName: profile.profileName,
-      plantName: profile.plantName,
-      moistureThreshold: profile.moistureThreshold,
-      temperatureThreshold: profile.temperatureThreshold,
-      humidityThreshold: profile.humidityThreshold,
-      lightThreshold: profile.lightThreshold,
+      profileName:    profile.profileName,
+      plantName:      profile.plantName,
+      moistureUpper:  String(profile.moistureUpper),
+      moistureLower:  String(profile.moistureLower),
+      tempUpper:      String(profile.tempUpper),
+      tempLower:      String(profile.tempLower),
+      humidityUpper:  String(profile.humidityUpper),
+      humidityLower:  String(profile.humidityLower),
+      lightThreshold: String(profile.lightThreshold),
     });
     setShowForm(true);
   };
 
   const handleDelete = (id) => {
     if (confirm('Are you sure you want to delete this profile?')) {
-      const newProfiles = profiles.filter(p => p.id !== id);
+      const newProfiles = profiles.filter((p) => p.id !== id);
       saveProfiles(newProfiles);
-      
       if (activeProfileId === id) {
         setActiveProfileId(null);
         localStorage.removeItem('activePlantThresholdProfile');
       }
-      
       setMessage({ type: 'success', text: 'Profile deleted!' });
     }
   };
@@ -154,17 +217,19 @@ export default function Plants() {
   const handleSetActive = async (profile) => {
     setActiveProfileId(profile.id);
     localStorage.setItem('activePlantThresholdProfile', profile.id);
-    
+
     if (isConnected) {
       setLoading(true);
       setMessage({ type: null, text: '' });
-      
       try {
         await sendPlantProfile({
-          moistureThreshold: profile.moistureThreshold,
-          temperatureThreshold: profile.temperatureThreshold,
-          humidityThreshold: profile.humidityThreshold,
-          lightThreshold: profile.lightThreshold,
+          moist_upper:     profile.moistureUpper,
+          moist_lower:     profile.moistureLower,
+          temp_upper:      profile.tempUpper,
+          temp_lower:      profile.tempLower,
+          hum_upper:       profile.humidityUpper,
+          hum_lower:       profile.humidityLower,
+          light_threshold: profile.lightThreshold,
         });
         setMessage({ type: 'success', text: 'Active profile sent to ESP32!' });
       } catch (error) {
@@ -177,20 +242,18 @@ export default function Plants() {
     }
   };
 
-  const activeProfile = profiles.find(p => p.id === activeProfileId);
+  const activeProfile = profiles.find((p) => p.id === activeProfileId);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-6xl mx-auto">
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Plant Threshold Profiles</h1>
             <button
-              onClick={() => {
-                resetForm();
-                setShowForm(true);
-              }}
+              onClick={() => { resetForm(); setShowForm(true); }}
               className="px-6 py-3 bg-green-600 dark:bg-green-500 text-white rounded-lg font-semibold hover:bg-green-700 dark:hover:bg-green-600 transition-colors shadow-md hover:shadow-lg"
             >
               + New Profile
@@ -198,11 +261,7 @@ export default function Plants() {
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div
-                className={`w-3 h-3 rounded-full ${
-                  isConnected ? 'bg-green-500' : 'bg-red-500'
-                } animate-pulse`}
-              />
+              <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 {isConnected ? 'Connected' : 'Disconnected'}
               </span>
@@ -215,17 +274,15 @@ export default function Plants() {
           </div>
         </div>
 
-        {/* Message Display */}
+        {/* Message */}
         {message.type && (
-          <div
-            className={`mb-6 px-4 py-3 rounded-lg ${
-              message.type === 'success'
-                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-400'
-                : message.type === 'warning'
-                ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-400'
-                : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-400'
-            }`}
-          >
+          <div className={`mb-6 px-4 py-3 rounded-lg ${
+            message.type === 'success'
+              ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-400'
+              : message.type === 'warning'
+              ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-400'
+              : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-400'
+          }`}>
             {message.text}
           </div>
         )}
@@ -237,6 +294,8 @@ export default function Plants() {
               {editingProfile ? 'Edit Profile' : 'New Plant Profile'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
+
+              {/* Profile Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Profile Name
@@ -251,6 +310,7 @@ export default function Plants() {
                 />
               </div>
 
+              {/* Plant Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Plant Name
@@ -265,61 +325,22 @@ export default function Plants() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Moisture Threshold (0-100)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.moistureThreshold}
-                  onChange={(e) => setFormData({ ...formData, moistureThreshold: Number(e.target.value) })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  required
-                />
-              </div>
+              {/* Range inputs */}
+              <RangeRow label="Moisture Threshold"    lowerKey="moistureLower"  upperKey="moistureUpper"  min={0}    max={100} formData={formData} setFormData={setFormData} />
+              <RangeRow label="Temperature Threshold" lowerKey="tempLower"      upperKey="tempUpper"      min={-100} max={100} formData={formData} setFormData={setFormData} />
+              <RangeRow label="Humidity Threshold"    lowerKey="humidityLower"  upperKey="humidityUpper"  min={0}    max={100} formData={formData} setFormData={setFormData} />
 
+              {/* Light threshold — single value */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Temperature Threshold (-100 to 100)
-                </label>
-                <input
-                  type="number"
-                  min="-100"
-                  max="100"
-                  value={formData.temperatureThreshold}
-                  onChange={(e) => setFormData({ ...formData, temperatureThreshold: Number(e.target.value) })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Humidity Threshold (0-100)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.humidityThreshold}
-                  onChange={(e) => setFormData({ ...formData, humidityThreshold: Number(e.target.value) })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Light Threshold (0-100)
+                  Light Threshold (0 – 100)
                 </label>
                 <input
                   type="number"
                   min="0"
                   max="100"
                   value={formData.lightThreshold}
-                  onChange={(e) => setFormData({ ...formData, lightThreshold: Number(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, lightThreshold: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   required
                 />
@@ -344,7 +365,7 @@ export default function Plants() {
           </div>
         )}
 
-        {/* Profiles List */}
+        {/* Profile Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {profiles.map((profile) => (
             <div
@@ -371,22 +392,20 @@ export default function Plants() {
                 </div>
               </div>
 
-              <div className="space-y-3 mb-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <span>Moisture:</span>
-                  <span>{profile.moistureThreshold}</span>
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  <span>Temperature:</span>
-                  <span className="ml-2">{profile.temperatureThreshold}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <span>Humidity:</span>
-                  <span>{profile.humidityThreshold}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className="space-y-2 mb-4">
+                {[
+                  { label: 'Moisture',    lower: profile.moistureLower,  upper: profile.moistureUpper  },
+                  { label: 'Temperature', lower: profile.tempLower,      upper: profile.tempUpper      },
+                  { label: 'Humidity',    lower: profile.humidityLower,  upper: profile.humidityUpper  },
+                ].map(({ label, lower, upper }) => (
+                  <div key={label} className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                    <span>{label}:</span>
+                    <span className="font-medium tabular-nums">{lower} – {upper}</span>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
                   <span>Light:</span>
-                  <span>{profile.lightThreshold}</span>
+                  <span className="font-medium tabular-nums">{profile.lightThreshold}</span>
                 </div>
               </div>
 
@@ -428,8 +447,8 @@ export default function Plants() {
             </button>
           </div>
         )}
+
       </div>
     </div>
   );
 }
-
