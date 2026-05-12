@@ -47,6 +47,21 @@ public class DeviceStatus {
     @SerializedName("pump_2")
     private boolean pump2;
 
+    @SerializedName("pump_1_triggered")
+    private boolean pump1Triggered;
+
+    @SerializedName("pump_2_triggered")
+    private boolean pump2Triggered;
+
+    @SerializedName("tank")
+    private boolean tank;
+
+    @SerializedName("pipe")
+    private boolean pipe;
+
+    @SerializedName("profile")
+    private EmbeddedProfile profile;
+
     @SerializedName("system_alerts")
     private List<String> systemAlerts;
 
@@ -148,11 +163,131 @@ public class DeviceStatus {
         this.pump2 = pump2;
     }
 
+    public boolean isPump1Triggered() {
+        return pump1Triggered;
+    }
+
+    public void setPump1Triggered(boolean pump1Triggered) {
+        this.pump1Triggered = pump1Triggered;
+    }
+
+    public boolean isPump2Triggered() {
+        return pump2Triggered;
+    }
+
+    public void setPump2Triggered(boolean pump2Triggered) {
+        this.pump2Triggered = pump2Triggered;
+    }
+
+    public boolean isTank() {
+        return tank;
+    }
+
+    public void setTank(boolean tank) {
+        this.tank = tank;
+    }
+
+    public boolean isPipe() {
+        return pipe;
+    }
+
+    public void setPipe(boolean pipe) {
+        this.pipe = pipe;
+    }
+
+    public EmbeddedProfile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(EmbeddedProfile profile) {
+        this.profile = profile;
+    }
+
     public List<String> getSystemAlerts() {
         return systemAlerts;
     }
 
     public void setSystemAlerts(List<String> systemAlerts) {
         this.systemAlerts = systemAlerts;
+    }
+
+    public static class EmbeddedProfile {
+
+        @SerializedName("moist_upper")
+        private int moistUpper;
+
+        @SerializedName("moist_lower")
+        private int moistLower;
+
+        @SerializedName("temp_upper")
+        private int tempUpper;
+
+        @SerializedName("temp_lower")
+        private int tempLower;
+
+        @SerializedName("hum_upper")
+        private int humUpper;
+
+        @SerializedName("hum_lower")
+        private int humLower;
+
+        @SerializedName("light_threshold")
+        private int lightThreshold;
+
+        public int getMoistUpper() {
+            return moistUpper;
+        }
+
+        public void setMoistUpper(int moistUpper) {
+            this.moistUpper = moistUpper;
+        }
+
+        public int getMoistLower() {
+            return moistLower;
+        }
+
+        public void setMoistLower(int moistLower) {
+            this.moistLower = moistLower;
+        }
+
+        public int getTempUpper() {
+            return tempUpper;
+        }
+
+        public void setTempUpper(int tempUpper) {
+            this.tempUpper = tempUpper;
+        }
+
+        public int getTempLower() {
+            return tempLower;
+        }
+
+        public void setTempLower(int tempLower) {
+            this.tempLower = tempLower;
+        }
+
+        public int getHumUpper() {
+            return humUpper;
+        }
+
+        public void setHumUpper(int humUpper) {
+            this.humUpper = humUpper;
+        }
+
+        public int getHumLower() {
+            return humLower;
+        }
+
+        public void setHumLower(int humLower) {
+            this.humLower = humLower;
+        }
+
+        public int getLightThreshold() {
+            return lightThreshold;
+        }
+
+        public void setLightThreshold(int lightThreshold) {
+            this.lightThreshold = lightThreshold;
+        }
     }
 }

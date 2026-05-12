@@ -17,27 +17,41 @@ public class IrrigationProfile {
     @SerializedName("plant_name")
     private String plantName;
 
-    // Thresholds - will be sent to embedded later when supported
-    @SerializedName("moisture_threshold")
-    private int moistureThreshold; // 0-100
+    // Band thresholds - sent directly to embedded device
+    @SerializedName("moist_upper")
+    private int moistUpper; // 0-100
 
-    @SerializedName("temp_threshold")
-    private int tempThreshold; // -100 .. +100
+    @SerializedName("moist_lower")
+    private int moistLower; // 0-100
 
-    @SerializedName("humidity_threshold")
-    private int humidityThreshold; // 0-100
+    @SerializedName("temp_upper")
+    private int tempUpper; // -100 .. +100
+
+    @SerializedName("temp_lower")
+    private int tempLower; // -100 .. +100
+
+    @SerializedName("humidity_upper")
+    private int humUpper; // 0-100
+
+    @SerializedName("humidity_lower")
+    private int humLower; // 0-100
 
     @SerializedName("light_threshold")
     private int lightThreshold; // 0-100
 
     public IrrigationProfile(String profileName, String plantName,
-                             int moistureThreshold, int tempThreshold,
-                             int humidityThreshold, int lightThreshold) {
+                             int moistUpper, int moistLower,
+                             int tempUpper, int tempLower,
+                             int humUpper, int humLower,
+                             int lightThreshold) {
         this.profileName = profileName;
         this.plantName = plantName;
-        this.moistureThreshold = moistureThreshold;
-        this.tempThreshold = tempThreshold;
-        this.humidityThreshold = humidityThreshold;
+        this.moistUpper = moistUpper;
+        this.moistLower = moistLower;
+        this.tempUpper = tempUpper;
+        this.tempLower = tempLower;
+        this.humUpper = humUpper;
+        this.humLower = humLower;
         this.lightThreshold = lightThreshold;
     }
 
@@ -57,28 +71,52 @@ public class IrrigationProfile {
         this.plantName = plantName;
     }
 
-    public int getMoistureThreshold() {
-        return moistureThreshold;
+    public int getMoistUpper() {
+        return moistUpper;
     }
 
-    public void setMoistureThreshold(int moistureThreshold) {
-        this.moistureThreshold = moistureThreshold;
+    public void setMoistUpper(int moistUpper) {
+        this.moistUpper = moistUpper;
     }
 
-    public int getTempThreshold() {
-        return tempThreshold;
+    public int getMoistLower() {
+        return moistLower;
     }
 
-    public void setTempThreshold(int tempThreshold) {
-        this.tempThreshold = tempThreshold;
+    public void setMoistLower(int moistLower) {
+        this.moistLower = moistLower;
     }
 
-    public int getHumidityThreshold() {
-        return humidityThreshold;
+    public int getTempUpper() {
+        return tempUpper;
     }
 
-    public void setHumidityThreshold(int humidityThreshold) {
-        this.humidityThreshold = humidityThreshold;
+    public void setTempUpper(int tempUpper) {
+        this.tempUpper = tempUpper;
+    }
+
+    public int getTempLower() {
+        return tempLower;
+    }
+
+    public void setTempLower(int tempLower) {
+        this.tempLower = tempLower;
+    }
+
+    public int getHumUpper() {
+        return humUpper;
+    }
+
+    public void setHumUpper(int humUpper) {
+        this.humUpper = humUpper;
+    }
+
+    public int getHumLower() {
+        return humLower;
+    }
+
+    public void setHumLower(int humLower) {
+        this.humLower = humLower;
     }
 
     public int getLightThreshold() {

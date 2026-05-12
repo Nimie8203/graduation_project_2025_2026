@@ -65,14 +65,16 @@ public class ProfileActivity extends AppCompatActivity implements ProfileAdapter
 
         final EditText profileName = dialogView.findViewById(R.id.edit_text_profile_name);
         final EditText plantName = dialogView.findViewById(R.id.edit_text_plant_name);
-        final EditText moistureThreshold = dialogView.findViewById(R.id.edit_text_moisture_threshold);
-        final EditText tempThreshold = dialogView.findViewById(R.id.edit_text_temp_threshold);
-        final EditText humidityThreshold = dialogView.findViewById(R.id.edit_text_humidity_threshold);
+        final EditText moistUpper = dialogView.findViewById(R.id.edit_text_moist_upper);
+        final EditText moistLower = dialogView.findViewById(R.id.edit_text_moist_lower);
+        final EditText tempUpper = dialogView.findViewById(R.id.edit_text_temp_upper);
+        final EditText tempLower = dialogView.findViewById(R.id.edit_text_temp_lower);
+        final EditText humUpper = dialogView.findViewById(R.id.edit_text_hum_upper);
+        final EditText humLower = dialogView.findViewById(R.id.edit_text_hum_lower);
         final EditText lightThreshold = dialogView.findViewById(R.id.edit_text_light_threshold);
 
         builder.setView(dialogView)
                 .setPositiveButton("Create", (dialog, id) -> {
-                    // Create profile from dialog input (thresholds only)
                     try {
                         String pName = profileName.getText().toString().trim();
                         String name = plantName.getText().toString().trim();
@@ -87,34 +89,54 @@ public class ProfileActivity extends AppCompatActivity implements ProfileAdapter
                             return;
                         }
 
-                        int moisture = Integer.parseInt(moistureThreshold.getText().toString());
-                        int temp = Integer.parseInt(tempThreshold.getText().toString());
-                        int humidity = Integer.parseInt(humidityThreshold.getText().toString());
-                        int light = Integer.parseInt(lightThreshold.getText().toString());
+                        String moistUpperStr = moistUpper.getText().toString().trim();
+                        String moistLowerStr = moistLower.getText().toString().trim();
+                        String tempUpperStr = tempUpper.getText().toString().trim();
+                        String tempLowerStr = tempLower.getText().toString().trim();
+                        String humUpperStr = humUpper.getText().toString().trim();
+                        String humLowerStr = humLower.getText().toString().trim();
+                        String lightStr = lightThreshold.getText().toString().trim();
+
+                        if (TextUtils.isEmpty(moistUpperStr) || TextUtils.isEmpty(moistLowerStr) ||
+                            TextUtils.isEmpty(tempUpperStr) || TextUtils.isEmpty(tempLowerStr) ||
+                            TextUtils.isEmpty(humUpperStr) || TextUtils.isEmpty(humLowerStr) ||
+                            TextUtils.isEmpty(lightStr)) {
+                            Toast.makeText(this, "All threshold fields are required", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        int moistUpperVal = Integer.parseInt(moistUpperStr);
+                        int moistLowerVal = Integer.parseInt(moistLowerStr);
+                        int tempUpperVal = Integer.parseInt(tempUpperStr);
+                        int tempLowerVal = Integer.parseInt(tempLowerStr);
+                        int humUpperVal = Integer.parseInt(humUpperStr);
+                        int humLowerVal = Integer.parseInt(humLowerStr);
+                        int lightVal = Integer.parseInt(lightStr);
 
                         // Validate ranges
-                        if (moisture < 0 || moisture > 100) {
-                            Toast.makeText(this, "Moisture threshold must be 0-100", Toast.LENGTH_SHORT).show();
+                        if (moistUpperVal < 0 || moistUpperVal > 100 || moistLowerVal < 0 || moistLowerVal > 100) {
+                            Toast.makeText(this, "Moisture upper/lower must be 0-100", Toast.LENGTH_SHORT).show();
                             return;
                         }
-                        if (temp < -100 || temp > 100) {
-                            Toast.makeText(this, "Temperature threshold must be -100 to 100", Toast.LENGTH_SHORT).show();
+                        if (tempUpperVal < -100 || tempUpperVal > 100 || tempLowerVal < -100 || tempLowerVal > 100) {
+                            Toast.makeText(this, "Temperature upper/lower must be -100 to 100", Toast.LENGTH_SHORT).show();
                             return;
                         }
-                        if (humidity < 0 || humidity > 100) {
-                            Toast.makeText(this, "Humidity threshold must be 0-100", Toast.LENGTH_SHORT).show();
+                        if (humUpperVal < 0 || humUpperVal > 100 || humLowerVal < 0 || humLowerVal > 100) {
+                            Toast.makeText(this, "Humidity upper/lower must be 0-100", Toast.LENGTH_SHORT).show();
                             return;
                         }
-                        if (light < 0 || light > 100) {
+                        if (lightVal < 0 || lightVal > 100) {
                             Toast.makeText(this, "Light threshold must be 0-100", Toast.LENGTH_SHORT).show();
                             return;
                         }
 
-                        IrrigationProfile newProfile = new IrrigationProfile(pName, name, moisture, temp, humidity, light);
+                        IrrigationProfile newProfile = new IrrigationProfile(pName, name, moistUpperVal, moistLowerVal, 
+                            tempUpperVal, tempLowerVal, humUpperVal, humLowerVal, lightVal);
                         createProfile(newProfile);
 
                     } catch (NumberFormatException e) {
-                        Toast.makeText(this, "Invalid input. Please check the formats.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Invalid number format. Please check your inputs.", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setNegativeButton("Cancel", (dialog, id) -> dialog.cancel());
@@ -127,12 +149,15 @@ public class ProfileActivity extends AppCompatActivity implements ProfileAdapter
             if (result != null && result.isSuccess() && result.getData() != null) {
                 IrrigationProfile createdProfile = result.getData();
                 String successText = String.format(Locale.getDefault(),
-                    "Profile %s saved (Plant: %s) — M:%d%% T:%d°C H:%d%% L:%d",
+                    "Profile %s saved (Plant: %s) — M:%d-%d T:%d-%d H:%d-%d L:%d",
                     createdProfile.getProfileName(),
                     createdProfile.getPlantName(),
-                    createdProfile.getMoistureThreshold(),
-                    createdProfile.getTempThreshold(),
-                    createdProfile.getHumidityThreshold(),
+                    createdProfile.getMoistLower(),
+                    createdProfile.getMoistUpper(),
+                    createdProfile.getTempLower(),
+                    createdProfile.getTempUpper(),
+                    createdProfile.getHumLower(),
+                    createdProfile.getHumUpper(),
                     createdProfile.getLightThreshold());
 
                 Toast.makeText(this, successText, Toast.LENGTH_LONG).show();

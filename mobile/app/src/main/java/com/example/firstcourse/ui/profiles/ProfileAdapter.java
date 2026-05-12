@@ -87,16 +87,20 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
         public void bind(IrrigationProfile profile) {
             profileName.setText(profile.getProfileName());
             plantName.setText(profile.getPlantName());
-            // Show thresholds instead of irrigation schedule
-            timesPerDay.setText(String.format(Locale.getDefault(), "M:%d T:%d H:%d L:%d",
-                    profile.getMoistureThreshold(), profile.getTempThreshold(),
-                    profile.getHumidityThreshold(), profile.getLightThreshold()));
+            // Show band thresholds
+            timesPerDay.setText(String.format(Locale.getDefault(), "M:%d-%d T:%d-%d H:%d-%d L:%d",
+                    profile.getMoistLower(), profile.getMoistUpper(),
+                    profile.getTempLower(), profile.getTempUpper(),
+                    profile.getHumLower(), profile.getHumUpper(),
+                    profile.getLightThreshold()));
 
             thresholdSummary.setText(String.format(Locale.getDefault(),
-                    "Moisture %d%%  Temp %d°C  Humidity %d%%  Light %d",
-                    profile.getMoistureThreshold(), profile.getTempThreshold(),
-                    profile.getHumidityThreshold(), profile.getLightThreshold()));
-            timesOfDay.setText("Thresholds ready");
+                    "Moisture %d-%d%%  Temp %d-%d°C  Humidity %d-%d%%  Light %d",
+                    profile.getMoistLower(), profile.getMoistUpper(),
+                    profile.getTempLower(), profile.getTempUpper(),
+                    profile.getHumLower(), profile.getHumUpper(),
+                    profile.getLightThreshold()));
+            timesOfDay.setText("Band thresholds ready");
 
             // Set delete button listener
             deleteButton.setOnClickListener(v -> {

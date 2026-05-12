@@ -153,21 +153,52 @@ public class DeviceRepository {
     public LiveData<ApiResult<IrrigationResponse>> stopIrrigation() {
         MutableLiveData<ApiResult<IrrigationResponse>> data = new MutableLiveData<>();
 
-        JsonObject payload = new JsonObject();
-        payload.addProperty("source", "mobile");
-        payload.addProperty("state", "off");
+        JsonObject pump1 = new JsonObject();
+        pump1.addProperty("pump", 1);
+        pump1.addProperty("state", "off");
 
-        enqueueJson(apiService.setPumpState(payload), new JsonHandler() {
+        JsonObject pump2 = new JsonObject();
+        pump2.addProperty("pump", 2);
+        pump2.addProperty("state", "off");
+
+        final int[] successCount = {0};
+
+        enqueueJson(apiService.setPumpState(pump1), new JsonHandler() {
             @Override
             public void onSuccess(JsonObject body) {
                 if (!isStatusOk(body)) {
-                    data.setValue(ApiResult.error(getDeviceMessage(body, "Pump stop command failed."), ApiResult.FailureReason.SERVER_ERROR));
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "Pump 1 stop command failed."), ApiResult.FailureReason.SERVER_ERROR));
                     return;
                 }
 
-                IrrigationResponse response = new IrrigationResponse();
-                response.setMessage("Pump stopped for mobile source.");
-                data.setValue(ApiResult.success(response, "Pump stop command sent."));
+                successCount[0]++;
+                if (successCount[0] == 2) {
+                    IrrigationResponse response = new IrrigationResponse();
+                    response.setMessage("Both pumps stopped.");
+                    data.setValue(ApiResult.success(response, "Pump stop command sent."));
+                }
+            }
+
+            @Override
+            public void onFailure(ApiResult.FailureReason reason, String message) {
+                data.setValue(ApiResult.error(message, reason));
+            }
+        });
+
+        enqueueJson(apiService.setPumpState(pump2), new JsonHandler() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                if (!isStatusOk(body)) {
+                    data.setValue(ApiResult.error(getDeviceMessage(body, "Pump 2 stop command failed."), ApiResult.FailureReason.SERVER_ERROR));
+                    return;
+                }
+
+                successCount[0]++;
+                if (successCount[0] == 2) {
+                    IrrigationResponse response = new IrrigationResponse();
+                    response.setMessage("Both pumps stopped.");
+                    data.setValue(ApiResult.success(response, "Pump stop command sent."));
+                }
             }
 
             @Override
@@ -519,13 +550,15 @@ public class DeviceRepository {
         }
 
         JsonObject payload = new JsonObject();
-        payload.addProperty("profile_name", profile.getProfileName());
-        payload.addProperty("plant_name", profile.getPlantName().trim());
-        payload.addProperty("moisture_threshold", profile.getMoistureThreshold());
-        payload.addProperty("temp_threshold", profile.getTempThreshold());
-        payload.addProperty("humidity_threshold", profile.getHumidityThreshold());
-        payload.addProperty("light_threshold", profile.getLightThreshold());
-        payload.addProperty("action", "active");
+
+        // Send band values directly to firmware
+        payload.addProperty("moist_upper", clampInt(profile.getMoistUpper(), 0, 100));
+        payload.addProperty("moist_lower", clampInt(profile.getMoistLower(), 0, 100));
+        payload.addProperty("temp_upper", clampInt(profile.getTempUpper(), -100, 100));
+        payload.addProperty("temp_lower", clampInt(profile.getTempLower(), -100, 100));
+        payload.addProperty("hum_upper", clampInt(profile.getHumUpper(), 0, 100));
+        payload.addProperty("hum_lower", clampInt(profile.getHumLower(), 0, 100));
+        payload.addProperty("light_threshold", clampInt(profile.getLightThreshold(), 0, 100));
 
         enqueueJson(apiService.createProfile(payload), new JsonHandler() {
             @Override
@@ -593,6 +626,11 @@ public class DeviceRepository {
         status.setLed(Boolean.TRUE.equals(getBoolean(body, "led")));
         status.setPump1(Boolean.TRUE.equals(getBoolean(body, "pump_1")));
         status.setPump2(Boolean.TRUE.equals(getBoolean(body, "pump_2")));
+        status.setPump1Triggered(Boolean.TRUE.equals(getBoolean(body, "pump_1_triggered")));
+        status.setPump2Triggered(Boolean.TRUE.equals(getBoolean(body, "pump_2_triggered")));
+        status.setTank(Boolean.TRUE.equals(getBoolean(body, "tank")));
+        status.setPipe(Boolean.TRUE.equals(getBoolean(body, "pipe")));
+        status.setProfile(parseEmbeddedProfile(body));
 
         Double moisture = averageMoisture(body);
         double avgMoisture = defaultValue(moisture, 0.0);
@@ -603,35 +641,78 @@ public class DeviceRepository {
                 String.valueOf(getBoolean(body, "led")),
                 String.valueOf(getBoolean(body, "pump_1")),
                 String.valueOf(getBoolean(body, "pump_2"))));
+        alerts.add(String.format(Locale.getDefault(), "Triggered=%s/%s, Tank=%s, Pipe=%s",
+                String.valueOf(getBoolean(body, "pump_1_triggered")),
+                String.valueOf(getBoolean(body, "pump_2_triggered")),
+                String.valueOf(getBoolean(body, "tank")),
+                String.valueOf(getBoolean(body, "pipe"))));
         status.setSystemAlerts(alerts);
 
         return status;
     }
 
     private IrrigationProfile parseProfile(JsonObject body) {
-        String profileName = getString(body, "profile_name");
-        String plantName = getString(body, "plant_name");
-
-        if (plantName == null) {
+        if (body == null) {
             return null;
         }
 
-        if (profileName == null || profileName.trim().isEmpty()) {
-            profileName = plantName + " Profile";
+        JsonObject source = body;
+        JsonElement profileElement = body.get("profile");
+        if (profileElement != null && profileElement.isJsonObject()) {
+            source = profileElement.getAsJsonObject();
         }
 
-        // Read thresholds if provided; otherwise use sensible defaults
-        Double moistureRaw = getNumber(body, "moisture_threshold");
-        Double tempRaw = getNumber(body, "temp_threshold");
-        Double humidityRaw = getNumber(body, "humidity_threshold");
-        Double lightRaw = getNumber(body, "light_threshold");
+        String profileName = getString(source, "profile_name");
+        String plantName = getString(source, "plant_name");
 
-        int moisture = moistureRaw != null ? (int) Math.round(moistureRaw) : DEFAULT_MOISTURE_THRESHOLD;
-        int temp = tempRaw != null ? (int) Math.round(tempRaw) : 20;
-        int humidity = humidityRaw != null ? (int) Math.round(humidityRaw) : 50;
-        int light = lightRaw != null ? (int) Math.round(lightRaw) : 50;
+        if (profileName == null || profileName.trim().isEmpty()) {
+            profileName = "Embedded Profile";
+        }
 
-        return new IrrigationProfile(profileName, plantName, moisture, temp, humidity, light);
+        if (plantName == null || plantName.trim().isEmpty()) {
+            plantName = "Embedded Device";
+        }
+
+        Double moistUpper = getNumber(source, "moist_upper");
+        Double moistLower = getNumber(source, "moist_lower");
+        Double tempUpper = getNumber(source, "temp_upper");
+        Double tempLower = getNumber(source, "temp_lower");
+        Double humUpper = getNumber(source, "hum_upper");
+        Double humLower = getNumber(source, "hum_lower");
+        Double lightRaw = getNumber(source, "light_threshold");
+
+        int moistUpperVal = moistUpper != null ? (int) Math.round(moistUpper) : 80;
+        int moistLowerVal = moistLower != null ? (int) Math.round(moistLower) : 20;
+        int tempUpperVal = tempUpper != null ? (int) Math.round(tempUpper) : 40;
+        int tempLowerVal = tempLower != null ? (int) Math.round(tempLower) : 5;
+        int humUpperVal = humUpper != null ? (int) Math.round(humUpper) : 60;
+        int humLowerVal = humLower != null ? (int) Math.round(humLower) : 20;
+        int lightVal = lightRaw != null ? (int) Math.round(lightRaw) : 85;
+
+        return new IrrigationProfile(profileName, plantName, moistUpperVal, moistLowerVal, 
+            tempUpperVal, tempLowerVal, humUpperVal, humLowerVal, lightVal);
+    }
+
+    private DeviceStatus.EmbeddedProfile parseEmbeddedProfile(JsonObject body) {
+        if (body == null) {
+            return null;
+        }
+
+        JsonObject source = body;
+        JsonElement profileElement = body.get("profile");
+        if (profileElement != null && profileElement.isJsonObject()) {
+            source = profileElement.getAsJsonObject();
+        }
+
+        DeviceStatus.EmbeddedProfile profile = new DeviceStatus.EmbeddedProfile();
+        profile.setMoistUpper((int) Math.round(defaultValue(getNumber(source, "moist_upper"), 0.0)));
+        profile.setMoistLower((int) Math.round(defaultValue(getNumber(source, "moist_lower"), 0.0)));
+        profile.setTempUpper((int) Math.round(defaultValue(getNumber(source, "temp_upper"), 0.0)));
+        profile.setTempLower((int) Math.round(defaultValue(getNumber(source, "temp_lower"), 0.0)));
+        profile.setHumUpper((int) Math.round(defaultValue(getNumber(source, "hum_upper"), 0.0)));
+        profile.setHumLower((int) Math.round(defaultValue(getNumber(source, "hum_lower"), 0.0)));
+        profile.setLightThreshold((int) Math.round(defaultValue(getNumber(source, "light_threshold"), 0.0)));
+        return profile;
     }
 
     private Double averageMoisture(JsonObject body) {
@@ -774,6 +855,10 @@ public class DeviceRepository {
 
     private double normalizeTenths(double value) {
         return Math.abs(value) >= 100.0 ? value / 10.0 : value;
+    }
+
+    private int clampInt(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private ApiResult.FailureReason resolveFailureReason(Throwable t) {

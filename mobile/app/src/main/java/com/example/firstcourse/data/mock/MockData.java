@@ -18,10 +18,10 @@ public class MockData {
 
     static {
         // Initialize with default profiles
-        // Use thresholds: moisture(0-100), temp(-100..100), humidity(0-100), light(0-100)
-        mockProfiles.add(new IrrigationProfile("Tomato Day Plan", "Tomato", 50, 22, 60, 75));
-        mockProfiles.add(new IrrigationProfile("Cucumber Day Plan", "Cucumber", 55, 20, 65, 70));
-        mockProfiles.add(new IrrigationProfile("Strawberry Day Plan", "Strawberry", 48, 18, 62, 68));
+        // Band format: moistUpper, moistLower, tempUpper, tempLower, humUpper, humLower, lightThreshold
+        mockProfiles.add(new IrrigationProfile("Tomato Day Plan", "Tomato", 60, 40, 27, 17, 70, 50, 75));
+        mockProfiles.add(new IrrigationProfile("Cucumber Day Plan", "Cucumber", 65, 45, 25, 15, 75, 55, 70));
+        mockProfiles.add(new IrrigationProfile("Strawberry Day Plan", "Strawberry", 58, 38, 23, 13, 72, 52, 68));
     }
 
     public static DeviceStatus getDynamicDeviceStatus(long timeMs) {
@@ -53,6 +53,20 @@ public class MockData {
         status.setLightIntensity(light);
         status.setFlowSensor1(round1(clamp(flow1, 0.0, 8.0)));
         status.setFlowSensor2(round1(clamp(flow2, 0.0, 8.0)));
+        status.setPump1Triggered(irrigating);
+        status.setPump2Triggered(irrigating);
+        status.setTank(true);
+        status.setPipe(true);
+
+        DeviceStatus.EmbeddedProfile profile = new DeviceStatus.EmbeddedProfile();
+        profile.setMoistUpper(80);
+        profile.setMoistLower(20);
+        profile.setTempUpper(40);
+        profile.setTempLower(5);
+        profile.setHumUpper(60);
+        profile.setHumLower(20);
+        profile.setLightThreshold(85);
+        status.setProfile(profile);
 
         status.setMoisture1(round1(clamp(moistureBase + moistureTrend + 4.0 * Math.sin(t / 4.0), 5.0, 100.0)));
         status.setMoisture2(round1(clamp(moistureBase + moistureTrend - 3.0 * Math.sin(t / 5.0), 5.0, 100.0)));
@@ -77,6 +91,19 @@ public class MockData {
         status.setLightIntensity(75);
         status.setFlowSensor1(2.4);
         status.setFlowSensor2(2.1);
+        status.setPump1Triggered(false);
+        status.setPump2Triggered(false);
+        status.setTank(true);
+        status.setPipe(true);
+        DeviceStatus.EmbeddedProfile profile = new DeviceStatus.EmbeddedProfile();
+        profile.setMoistUpper(80);
+        profile.setMoistLower(20);
+        profile.setTempUpper(40);
+        profile.setTempLower(5);
+        profile.setHumUpper(60);
+        profile.setHumLower(20);
+        profile.setLightThreshold(85);
+        status.setProfile(profile);
         status.setMoisture1(55.5);
         status.setMoisture2(57.0);
         status.setMoisture3(53.8);
