@@ -53,7 +53,7 @@ void app_main(void)
     delay_ms(2000);
     lcd_clear();
     delay_ms(10);
-
+    irrig_amount = g_state.profile.moist_lower;
     while (1)
     {
         ESP_LOGI(TEMP_TAG, "%d", g_state.temperature);
@@ -75,11 +75,12 @@ void app_main(void)
 
         line_1_avg = (uint8_t)(g_state.moisture_1 + g_state.moisture_2) / 2;
         line_2_avg = (uint8_t)(g_state.moisture_3 + g_state.moisture_4) / 2;
+        
 
-        if (irrig_amount == line_1_avg && irrig_amount == line_2_avg)
+        if (irrig_amount <= line_1_avg && irrig_amount <= line_2_avg)
         {
             pump_off(1);
-            pump_off(1);
+            pump_off(2);
             g_state.pump_1_triggered = false;
             g_state.pump_2_triggered = false;
         }
@@ -100,6 +101,7 @@ void app_main(void)
             pump_off(2);
             g_state.pump_1_triggered = false;
             g_state.pump_2_triggered = false;
+            delay_ms(2000);
             continue;
         }
 
@@ -145,8 +147,7 @@ void app_main(void)
         else if (g_state.temperature <= g_state.profile.temp_lower && g_state.humidity <= g_state.profile.hum_lower)
         {
             irrig_amount = g_state.profile.moist_lower - OFFSET_COLD_DRY;
-            if (irrig_amount >= 100)
-                irrig_amount = 100;
+            
 
             if (line_1_avg <= g_state.profile.moist_lower && line_2_avg <= g_state.profile.moist_lower)
             {
@@ -164,9 +165,8 @@ void app_main(void)
         }
         else if (g_state.temperature <= g_state.profile.temp_lower && g_state.humidity >= g_state.profile.hum_upper)
         {
-            irrig_amount = g_state.profile.moist_upper - OFFSET_COLD_WET;
-            if (irrig_amount >= 100)
-                irrig_amount = 100;
+            irrig_amount = g_state.profile.moist_lower - OFFSET_COLD_WET;
+            
 
             if (line_1_avg <= g_state.profile.moist_lower && line_2_avg <= g_state.profile.moist_lower)
             {
@@ -184,7 +184,7 @@ void app_main(void)
         }
         else
         {
-            irrig_amount = g_state.profile.moist_upper;
+            irrig_amount = g_state.profile.moist_lower;
 
             if (irrig_amount >= 100)
                 irrig_amount = 100;

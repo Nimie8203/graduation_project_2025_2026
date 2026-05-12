@@ -51,7 +51,7 @@ static esp_err_t read_body(httpd_req_t *req, char *buf, size_t buf_size)
 }
 
 // ─────────────────────────────────────────────
-// OPTIONS — CORS preflight for all routes
+// OPTIONS — CORS preflight
 // ─────────────────────────────────────────────
 esp_err_t options_handler(httpd_req_t *req)
 {
@@ -69,33 +69,121 @@ esp_err_t status_handler(httpd_req_t *req)
     add_cors_headers(req);
 
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "status", "ok");
-    cJSON_AddBoolToObject(root, "led",            g_state.led_state);
-    cJSON_AddBoolToObject(root, "pump_1",         g_state.pump_1_state);
-    cJSON_AddBoolToObject(root, "pump_2",         g_state.pump_2_state);
-    cJSON_AddNumberToObject(root, "temperature",  g_state.temperature);
-    cJSON_AddNumberToObject(root, "humidity",     g_state.humidity);
-    cJSON_AddNumberToObject(root, "light_intensity", g_state.light_intensity);
-    cJSON_AddNumberToObject(root, "flow_sensor_1",   g_state.flow_sens_1);
-    cJSON_AddNumberToObject(root, "flow_sensor_2",   g_state.flow_sens_2);
-    cJSON_AddNumberToObject(root, "moisture_1",  g_state.moisture_1);
-    cJSON_AddNumberToObject(root, "moisture_2",  g_state.moisture_2);
-    cJSON_AddNumberToObject(root, "moisture_3",  g_state.moisture_3);
-    cJSON_AddNumberToObject(root, "moisture_4",  g_state.moisture_4);
-    cJSON_AddNumberToObject(root, "tank", g_state.tank_state);
-    cJSON_AddNumberToObject(root, "pipe", g_state.pipe_state);
-    //cJSON_AddNumberToObject(root, "profile", g_state.profile.profile_name);
-    //cJSON_AddNumberToObject(root, "profile", g_state.profile.plant_name);
-    //cJSON_AddNumberToObject(root, "profile", g_state.profile.moisture_threshold);
+    cJSON_AddStringToObject(root, "status",          "ok");
+    cJSON_AddBoolToObject(root,   "led",              g_state.led_state);
+    cJSON_AddBoolToObject(root,   "pump_1",           g_state.pump_1_state);
+    cJSON_AddBoolToObject(root,   "pump_2",           g_state.pump_2_state);
+    cJSON_AddBoolToObject(root,   "pump_1_triggered", g_state.pump_1_triggered);
+    cJSON_AddBoolToObject(root,   "pump_2_triggered", g_state.pump_2_triggered);
+    cJSON_AddBoolToObject(root,   "tank",             g_state.tank_state);
+    cJSON_AddBoolToObject(root,   "pipe",             g_state.pipe_state);
+    cJSON_AddNumberToObject(root, "temperature",      g_state.temperature);
+    cJSON_AddNumberToObject(root, "humidity",         g_state.humidity);
+    cJSON_AddNumberToObject(root, "light_intensity",  g_state.light_intensity);
+    cJSON_AddNumberToObject(root, "flow_sensor_1",    g_state.flow_sens_1);
+    cJSON_AddNumberToObject(root, "flow_sensor_2",    g_state.flow_sens_2);
+    cJSON_AddNumberToObject(root, "moisture_1",       g_state.moisture_1);
+    cJSON_AddNumberToObject(root, "moisture_2",       g_state.moisture_2);
+    cJSON_AddNumberToObject(root, "moisture_3",       g_state.moisture_3);
+    cJSON_AddNumberToObject(root, "moisture_4",       g_state.moisture_4);
+
+    // Embed current profile as nested object
+    cJSON *profile = cJSON_CreateObject();
+    cJSON_AddNumberToObject(profile, "moist_upper",      g_state.profile.moist_upper);
+    cJSON_AddNumberToObject(profile, "moist_lower",      g_state.profile.moist_lower);
+    cJSON_AddNumberToObject(profile, "temp_upper",       g_state.profile.temp_upper);
+    cJSON_AddNumberToObject(profile, "temp_lower",       g_state.profile.temp_lower);
+    cJSON_AddNumberToObject(profile, "hum_upper",        g_state.profile.hum_upper);
+    cJSON_AddNumberToObject(profile, "hum_lower",        g_state.profile.hum_lower);
+    cJSON_AddNumberToObject(profile, "light_threshold",  g_state.profile.light_threshold);
+    cJSON_AddItemToObject(root, "profile", profile);
 
     send_json(req, root);
     return ESP_OK;
 }
 
 // ─────────────────────────────────────────────
+// GET /api/profile
+// ─────────────────────────────────────────────
+esp_err_t profile_get_handler(httpd_req_t *req)
+{
+    add_cors_headers(req);
+
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "status",              "ok");
+    cJSON_AddNumberToObject(root, "moist_upper",         g_state.profile.moist_upper);
+    cJSON_AddNumberToObject(root, "moist_lower",         g_state.profile.moist_lower);
+    cJSON_AddNumberToObject(root, "temp_upper",          g_state.profile.temp_upper);
+    cJSON_AddNumberToObject(root, "temp_lower",          g_state.profile.temp_lower);
+    cJSON_AddNumberToObject(root, "hum_upper",           g_state.profile.hum_upper);
+    cJSON_AddNumberToObject(root, "hum_lower",           g_state.profile.hum_lower);
+    cJSON_AddNumberToObject(root, "light_threshold",     g_state.profile.light_threshold);
+
+    send_json(req, root);
+    return ESP_OK;
+}
+
+// ─────────────────────────────────────────────
+// POST /api/profile
+// All fields optional — only provided fields are updated.
+// Body example:
+// {
+//   "moist_upper": 80, "moist_lower": 20,
+//   "temp_upper": 40,  "temp_lower": 5,
+//   "hum_upper": 60,   "hum_lower": 20,
+//   "light_threshold": 85
+// }
+// ─────────────────────────────────────────────
+esp_err_t profile_post_handler(httpd_req_t *req)
+{
+    add_cors_headers(req);
+
+    char body[128];
+    if (read_body(req, body, sizeof(body)) != ESP_OK)
+    {
+        send_error(req, "Body too large or read failed");
+        return ESP_FAIL;
+    }
+
+    cJSON *json = cJSON_Parse(body);
+    if (!json) { send_error(req, "Invalid JSON"); return ESP_FAIL; }
+
+    // Helper macro: update field only if present and is a number
+    #define UPDATE_U8(field, key) \
+        do { \
+            cJSON *_j = cJSON_GetObjectItem(json, key); \
+            if (cJSON_IsNumber(_j)) \
+                g_state.profile.field = (uint8_t)_j->valueint; \
+        } while (0)
+
+    UPDATE_U8(moist_upper,      "moist_upper");
+    UPDATE_U8(moist_lower,      "moist_lower");
+    UPDATE_U8(temp_upper,       "temp_upper");
+    UPDATE_U8(temp_lower,       "temp_lower");
+    UPDATE_U8(hum_upper,        "hum_upper");
+    UPDATE_U8(hum_lower,        "hum_lower");
+    UPDATE_U8(light_threshold,  "light_threshold");
+
+    #undef UPDATE_U8
+
+    cJSON_Delete(json);
+
+    // Echo back the full updated profile
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "status",              "ok");
+    cJSON_AddNumberToObject(root, "moist_upper",         g_state.profile.moist_upper);
+    cJSON_AddNumberToObject(root, "moist_lower",         g_state.profile.moist_lower);
+    cJSON_AddNumberToObject(root, "temp_upper",          g_state.profile.temp_upper);
+    cJSON_AddNumberToObject(root, "temp_lower",          g_state.profile.temp_lower);
+    cJSON_AddNumberToObject(root, "hum_upper",           g_state.profile.hum_upper);
+    cJSON_AddNumberToObject(root, "hum_lower",           g_state.profile.hum_lower);
+    cJSON_AddNumberToObject(root, "light_threshold",     g_state.profile.light_threshold);
+    send_json(req, root);
+    return ESP_OK;
+}
+
+// ─────────────────────────────────────────────
 // POST /api/pump
-// Body: {"pump": 1, "state": "on"}
-//       {"source": "web"|"mobile", "state": "on"|"off"}
 // ─────────────────────────────────────────────
 esp_err_t pump_handler(httpd_req_t *req)
 {
@@ -162,15 +250,14 @@ esp_err_t pump_handler(httpd_req_t *req)
 
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "status", "ok");
-    cJSON_AddNumberToObject(root, "pump",  pump_num);
-    cJSON_AddStringToObject(root, "state", turn_on ? "on" : "off");
+    cJSON_AddNumberToObject(root, "pump",   pump_num);
+    cJSON_AddStringToObject(root, "state",  turn_on ? "on" : "off");
     send_json(req, root);
     return ESP_OK;
 }
 
 // ─────────────────────────────────────────────
 // POST /api/led
-// Body: {"state": "on"} or {"state": "off"}
 // ─────────────────────────────────────────────
 esp_err_t led_handler(httpd_req_t *req)
 {
@@ -202,7 +289,7 @@ esp_err_t led_handler(httpd_req_t *req)
 
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "status", "ok");
-    cJSON_AddStringToObject(root, "state", turn_on ? "on" : "off");
+    cJSON_AddStringToObject(root, "state",  turn_on ? "on" : "off");
     send_json(req, root);
     return ESP_OK;
 }
@@ -231,9 +318,9 @@ static void wifi_event_handler(void *arg, esp_event_base_t base,
 static httpd_handle_t start_webserver(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.server_port     = 80;
-    config.max_uri_handlers = 20; // exactly covers the 16 handlers below, +4 headroom
-    config.stack_size      = 8192;
+    config.server_port      = 80;
+    config.max_uri_handlers = 20;
+    config.stack_size       = 8192;
 
     httpd_handle_t server = NULL;
     if (httpd_start(&server, &config) != ESP_OK)
@@ -242,26 +329,28 @@ static httpd_handle_t start_webserver(void)
         return NULL;
     }
 
-    // ── OPTIONS (CORS preflight) ──────────────────────────
-    httpd_uri_t uri_opt_status     = { .uri = "/api/status",           .method = HTTP_OPTIONS, .handler = options_handler };
-    httpd_uri_t uri_opt_pump       = { .uri = "/api/pump",             .method = HTTP_OPTIONS, .handler = options_handler };
-    httpd_uri_t uri_opt_led        = { .uri = "/api/led",              .method = HTTP_OPTIONS, .handler = options_handler };
+    // OPTIONS preflight
+    httpd_uri_t uri_opt_status  = { .uri = "/api/status",  .method = HTTP_OPTIONS, .handler = options_handler };
+    httpd_uri_t uri_opt_pump    = { .uri = "/api/pump",    .method = HTTP_OPTIONS, .handler = options_handler };
+    httpd_uri_t uri_opt_led     = { .uri = "/api/led",     .method = HTTP_OPTIONS, .handler = options_handler };
+    httpd_uri_t uri_opt_profile = { .uri = "/api/profile", .method = HTTP_OPTIONS, .handler = options_handler };
 
-    // ── Status ────────────────────────────────────────────
-    httpd_uri_t uri_status         = { .uri = "/api/status",           .method = HTTP_GET,    .handler = status_handler };
-
-    // ── Pump ──────────────────────────────────────────────
-    httpd_uri_t uri_pump           = { .uri = "/api/pump",             .method = HTTP_POST,   .handler = pump_handler };
-
-    // ── LED ───────────────────────────────────────────────
-    httpd_uri_t uri_led            = { .uri = "/api/led",              .method = HTTP_POST,   .handler = led_handler };
+    // Routes
+    httpd_uri_t uri_status       = { .uri = "/api/status",  .method = HTTP_GET,  .handler = status_handler };
+    httpd_uri_t uri_pump         = { .uri = "/api/pump",    .method = HTTP_POST, .handler = pump_handler };
+    httpd_uri_t uri_led          = { .uri = "/api/led",     .method = HTTP_POST, .handler = led_handler };
+    httpd_uri_t uri_profile_get  = { .uri = "/api/profile", .method = HTTP_GET,  .handler = profile_get_handler };
+    httpd_uri_t uri_profile_post = { .uri = "/api/profile", .method = HTTP_POST, .handler = profile_post_handler };
 
     httpd_register_uri_handler(server, &uri_opt_status);
     httpd_register_uri_handler(server, &uri_opt_pump);
     httpd_register_uri_handler(server, &uri_opt_led);
+    httpd_register_uri_handler(server, &uri_opt_profile);
     httpd_register_uri_handler(server, &uri_status);
     httpd_register_uri_handler(server, &uri_pump);
     httpd_register_uri_handler(server, &uri_led);
+    httpd_register_uri_handler(server, &uri_profile_get);
+    httpd_register_uri_handler(server, &uri_profile_post);
 
     ESP_LOGI(WIFI_TAG, "HTTP server started on port %d", config.server_port);
     return server;
