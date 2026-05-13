@@ -110,14 +110,14 @@ esp_err_t profile_get_handler(httpd_req_t *req)
     add_cors_headers(req);
 
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "status",              "ok");
-    cJSON_AddNumberToObject(root, "moist_upper",         g_state.profile.moist_upper);
-    cJSON_AddNumberToObject(root, "moist_lower",         g_state.profile.moist_lower);
-    cJSON_AddNumberToObject(root, "temp_upper",          g_state.profile.temp_upper);
-    cJSON_AddNumberToObject(root, "temp_lower",          g_state.profile.temp_lower);
-    cJSON_AddNumberToObject(root, "hum_upper",           g_state.profile.hum_upper);
-    cJSON_AddNumberToObject(root, "hum_lower",           g_state.profile.hum_lower);
-    cJSON_AddNumberToObject(root, "light_threshold",     g_state.profile.light_threshold);
+    cJSON_AddStringToObject(root, "status",          "ok");
+    cJSON_AddNumberToObject(root, "moist_upper",     g_state.profile.moist_upper);
+    cJSON_AddNumberToObject(root, "moist_lower",     g_state.profile.moist_lower);
+    cJSON_AddNumberToObject(root, "temp_upper",      g_state.profile.temp_upper);
+    cJSON_AddNumberToObject(root, "temp_lower",      g_state.profile.temp_lower);
+    cJSON_AddNumberToObject(root, "hum_upper",       g_state.profile.hum_upper);
+    cJSON_AddNumberToObject(root, "hum_lower",       g_state.profile.hum_lower);
+    cJSON_AddNumberToObject(root, "light_threshold", g_state.profile.light_threshold);
 
     send_json(req, root);
     return ESP_OK;
@@ -148,6 +148,9 @@ esp_err_t profile_post_handler(httpd_req_t *req)
     cJSON *json = cJSON_Parse(body);
     if (!json) { send_error(req, "Invalid JSON"); return ESP_FAIL; }
 
+    // Snapshot the profile before changes so we can log only what changed
+    profile_t old = g_state.profile;
+
     // Helper macro: update field only if present and is a number
     #define UPDATE_U8(field, key) \
         do { \
@@ -156,28 +159,53 @@ esp_err_t profile_post_handler(httpd_req_t *req)
                 g_state.profile.field = (uint8_t)_j->valueint; \
         } while (0)
 
-    UPDATE_U8(moist_upper,      "moist_upper");
-    UPDATE_U8(moist_lower,      "moist_lower");
-    UPDATE_U8(temp_upper,       "temp_upper");
-    UPDATE_U8(temp_lower,       "temp_lower");
-    UPDATE_U8(hum_upper,        "hum_upper");
-    UPDATE_U8(hum_lower,        "hum_lower");
-    UPDATE_U8(light_threshold,  "light_threshold");
+    UPDATE_U8(moist_upper,     "moist_upper");
+    UPDATE_U8(moist_lower,     "moist_lower");
+    UPDATE_U8(temp_upper,      "temp_upper");
+    UPDATE_U8(temp_lower,      "temp_lower");
+    UPDATE_U8(hum_upper,       "hum_upper");
+    UPDATE_U8(hum_lower,       "hum_lower");
+    UPDATE_U8(light_threshold, "light_threshold");
 
     #undef UPDATE_U8
 
     cJSON_Delete(json);
 
+    // ── Log what changed, then print the full current profile ────────
+    ESP_LOGI(PROFILE_TAG, "Profile updated via HTTP");
+    if (old.moist_upper     != g_state.profile.moist_upper)
+        ESP_LOGI(PROFILE_TAG, "  moist_upper     : %d -> %d", old.moist_upper,     g_state.profile.moist_upper);
+    if (old.moist_lower     != g_state.profile.moist_lower)
+        ESP_LOGI(PROFILE_TAG, "  moist_lower     : %d -> %d", old.moist_lower,     g_state.profile.moist_lower);
+    if (old.temp_upper      != g_state.profile.temp_upper)
+        ESP_LOGI(PROFILE_TAG, "  temp_upper      : %d -> %d", old.temp_upper,      g_state.profile.temp_upper);
+    if (old.temp_lower      != g_state.profile.temp_lower)
+        ESP_LOGI(PROFILE_TAG, "  temp_lower      : %d -> %d", old.temp_lower,      g_state.profile.temp_lower);
+    if (old.hum_upper       != g_state.profile.hum_upper)
+        ESP_LOGI(PROFILE_TAG, "  hum_upper       : %d -> %d", old.hum_upper,       g_state.profile.hum_upper);
+    if (old.hum_lower       != g_state.profile.hum_lower)
+        ESP_LOGI(PROFILE_TAG, "  hum_lower       : %d -> %d", old.hum_lower,       g_state.profile.hum_lower);
+    if (old.light_threshold != g_state.profile.light_threshold)
+        ESP_LOGI(PROFILE_TAG, "  light_threshold : %d -> %d", old.light_threshold, g_state.profile.light_threshold);
+    ESP_LOGI(PROFILE_TAG, "Current profile:");
+    ESP_LOGI(PROFILE_TAG, "  moist_upper     = %d", g_state.profile.moist_upper);
+    ESP_LOGI(PROFILE_TAG, "  moist_lower     = %d", g_state.profile.moist_lower);
+    ESP_LOGI(PROFILE_TAG, "  temp_upper      = %d", g_state.profile.temp_upper);
+    ESP_LOGI(PROFILE_TAG, "  temp_lower      = %d", g_state.profile.temp_lower);
+    ESP_LOGI(PROFILE_TAG, "  hum_upper       = %d", g_state.profile.hum_upper);
+    ESP_LOGI(PROFILE_TAG, "  hum_lower       = %d", g_state.profile.hum_lower);
+    ESP_LOGI(PROFILE_TAG, "  light_threshold = %d", g_state.profile.light_threshold);
+
     // Echo back the full updated profile
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "status",              "ok");
-    cJSON_AddNumberToObject(root, "moist_upper",         g_state.profile.moist_upper);
-    cJSON_AddNumberToObject(root, "moist_lower",         g_state.profile.moist_lower);
-    cJSON_AddNumberToObject(root, "temp_upper",          g_state.profile.temp_upper);
-    cJSON_AddNumberToObject(root, "temp_lower",          g_state.profile.temp_lower);
-    cJSON_AddNumberToObject(root, "hum_upper",           g_state.profile.hum_upper);
-    cJSON_AddNumberToObject(root, "hum_lower",           g_state.profile.hum_lower);
-    cJSON_AddNumberToObject(root, "light_threshold",     g_state.profile.light_threshold);
+    cJSON_AddStringToObject(root, "status",          "ok");
+    cJSON_AddNumberToObject(root, "moist_upper",     g_state.profile.moist_upper);
+    cJSON_AddNumberToObject(root, "moist_lower",     g_state.profile.moist_lower);
+    cJSON_AddNumberToObject(root, "temp_upper",      g_state.profile.temp_upper);
+    cJSON_AddNumberToObject(root, "temp_lower",      g_state.profile.temp_lower);
+    cJSON_AddNumberToObject(root, "hum_upper",       g_state.profile.hum_upper);
+    cJSON_AddNumberToObject(root, "hum_lower",       g_state.profile.hum_lower);
+    cJSON_AddNumberToObject(root, "light_threshold", g_state.profile.light_threshold);
     send_json(req, root);
     return ESP_OK;
 }
