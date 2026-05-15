@@ -384,34 +384,69 @@ public class AnimatedDashboardView extends View {
         textPaint.setColor(Color.argb(220, 40, 50, 65));
         canvas.drawText("MOISTURE", left + dp(12f), titleY, textPaint);
 
-        float barAreaTop = top + dp(34f);
-        float barAreaBottom = bottom - dp(22f);
-        float barCount = 4f;
-        float gap = dp(14f);
-        float availableWidth = (right - left) - dp(24f) - gap * (barCount - 1f);
-        float barWidth = availableWidth / barCount;
+        float panelLeft = left + dp(12f);
+        float panelRight = right - dp(12f);
+        float panelTop = top + dp(32f);
+        float panelBottom = bottom - dp(12f);
+        float cellGapX = dp(10f);
+        float cellGapY = dp(8f);
+        float cellWidth = (panelRight - panelLeft - cellGapX) / 2f;
+        float cellHeight = (panelBottom - panelTop - cellGapY) / 2f;
 
         for (int i = 0; i < 4; i++) {
-            float barLeft = left + dp(12f) + i * (barWidth + gap);
-            float barRight = barLeft + barWidth;
+            int row = i / 2;
+            int col = i % 2;
 
-            rect.set(barLeft, barAreaTop, barRight, barAreaBottom);
-            fillPaint.setColor(Color.argb(130, 223, 228, 234));
-            canvas.drawRoundRect(rect, dp(6f), dp(6f), fillPaint);
+            float cellLeft = panelLeft + col * (cellWidth + cellGapX);
+            float cellTop = panelTop + row * (cellHeight + cellGapY);
+            float cellRight = cellLeft + cellWidth;
+            float cellBottom = cellTop + cellHeight;
+
+            rect.set(cellLeft, cellTop, cellRight, cellBottom);
+            fillPaint.setColor(Color.argb(95, 255, 255, 255));
+            canvas.drawRoundRect(rect, dp(12f), dp(12f), fillPaint);
+
+            strokePaint.setColor(Color.argb(70, 125, 145, 165));
+            strokePaint.setStrokeWidth(dp(1f));
+            canvas.drawRoundRect(rect, dp(12f), dp(12f), strokePaint);
 
             float moisture = clamp(currentMoisture[i], 0f, 100f);
-            float fillHeight = (barAreaBottom - barAreaTop) * (moisture / 100f);
-            float fillTop = barAreaBottom - fillHeight;
+            float iconCx = cellLeft + dp(16f);
+            float iconCy = cellTop + dp(18f);
+            float iconR = dp(8f);
 
+            fillPaint.setColor(Color.argb(235, 222, 243, 255));
+            canvas.drawCircle(iconCx, iconCy, iconR, fillPaint);
+            strokePaint.setColor(Color.argb(185, 80, 155, 205));
+            strokePaint.setStrokeWidth(dp(1.2f));
+            canvas.drawCircle(iconCx, iconCy, iconR, strokePaint);
+
+            float dropTop = iconCy - dp(6f);
+            path.reset();
+            path.moveTo(iconCx, dropTop);
+            path.quadTo(iconCx + dp(5f), iconCy - dp(1.5f), iconCx, iconCy + dp(6f));
+            path.quadTo(iconCx - dp(5f), iconCy - dp(1.5f), iconCx, dropTop);
+            fillPaint.setColor(Color.argb(220, 88, 173, 230));
+            canvas.drawPath(path, fillPaint);
+
+            float barX = cellLeft + cellWidth - dp(18f);
+            float barTop = cellTop + dp(9f);
+            float barBottom = cellTop + cellHeight - dp(22f);
+            float barWidth = dp(10f);
+            rect.set(barX, barTop, barX + barWidth, barBottom);
+            fillPaint.setColor(Color.argb(125, 214, 224, 233));
+            canvas.drawRoundRect(rect, dp(5f), dp(5f), fillPaint);
+
+            float fillHeight = (barBottom - barTop) * (moisture / 100f);
+            float fillTop = barBottom - fillHeight;
             int wetColor = interpolateColor(Color.parseColor("#8A6D3B"), Color.parseColor("#4FAE63"), moisture / 100f);
-            rect.set(barLeft, fillTop, barRight, barAreaBottom);
+            rect.set(barX, fillTop, barX + barWidth, barBottom);
             fillPaint.setColor(wetColor);
-            canvas.drawRoundRect(rect, dp(6f), dp(6f), fillPaint);
+            canvas.drawRoundRect(rect, dp(5f), dp(5f), fillPaint);
 
-            textPaint.setTextSize(dp(10f));
-            textPaint.setColor(Color.argb(230, 35, 42, 56));
-            canvas.drawText("M" + (i + 1), barLeft, barAreaBottom + dp(14f), textPaint);
-            canvas.drawText(String.format(Locale.getDefault(), "%.0f%%", moisture), barLeft, barAreaTop - dp(6f), textPaint);
+            textPaint.setTextSize(dp(9f));
+            textPaint.setColor(Color.argb(235, 35, 42, 56));
+            canvas.drawText("Moisture " + (i + 1), cellLeft + dp(8f), cellBottom - dp(7f), textPaint);
         }
     }
 
