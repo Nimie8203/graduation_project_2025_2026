@@ -4,7 +4,7 @@
 
 static int compare(const void *a, const void *b)
 {
-    return (*(int*)a - *(int*)b);  // fix: was casting to uint16_t*, causing signed compare bug
+    return (*(int *)a - *(int *)b); // fix: was casting to uint16_t*, causing signed compare bug
 }
 
 static uint16_t read_median(adc_channel_t channel)
@@ -24,7 +24,7 @@ static uint16_t read_median(adc_channel_t channel)
 void init_ldr(void)
 {
     adc_oneshot_chan_cfg_t chan_cfg = {
-        .atten    = ADC_ATTEN_DB_12,
+        .atten = ADC_ATTEN_DB_12,
         .bitwidth = ADC_BITWIDTH_12,
     };
     ESP_ERROR_CHECK(adc_oneshot_config_channel(g_adc1_handle, LDR_CHANNEL, &chan_cfg));
@@ -33,7 +33,9 @@ void init_ldr(void)
 void read_ldr(void)
 {
     uint16_t filtered_value = read_median(LDR_CHANNEL);
-    g_state.light_intensity = (filtered_value * 100) / 4096;
-    //g_state.light_intensity = filtered_value;
-    
+    g_state.light_intensity = 100 - ((uint32_t)filtered_value * 100) / 4095;
+
+    //int raw = 0;
+    //adc_oneshot_read(g_adc1_handle, LDR_CHANNEL, &raw);
+    //g_state.light_intensity = 100 - (raw * 100) / 4095;
 }
