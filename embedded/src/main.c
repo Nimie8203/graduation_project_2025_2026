@@ -10,6 +10,9 @@
 #include "tasks.h"
 #include "uart.h"
 
+// #define PUMP_TESTING
+#define NORMAL
+
 uint8_t line_1_avg = 0;
 uint8_t line_2_avg = 0;
 
@@ -61,27 +64,28 @@ void app_main(void)
     while (1)
     {
         delay_ms(2000);
-        ESP_LOGI(TEMP_TAG,    "%d", g_state.temperature);
-        ESP_LOGI(HUM_TAG,     "%d", g_state.humidity);
-        ESP_LOGI(FLOW_TAG,    "%d", g_state.flow_sens_1);
-        ESP_LOGI(FLOW_TAG,    "%d", g_state.flow_sens_2);
-        ESP_LOGI(LDR_TAG,     "%d", g_state.light_intensity);
-        ESP_LOGI(MOIST_TAG,   "%d", g_state.moisture_1);
-        ESP_LOGI(MOIST_TAG,   "%d", g_state.moisture_2);
-        ESP_LOGI(MOIST_TAG,   "%d", g_state.moisture_3);
-        ESP_LOGI(MOIST_TAG,   "%d", g_state.moisture_4);
-        ESP_LOGI(PUMP_TAG,    "%d", g_state.pump_1_state);
-        ESP_LOGI(PUMP_TAG,    "%d", g_state.pump_2_state);
-        ESP_LOGI(PUMP_TAG,    "%d", g_state.pump_1_triggered);
-        ESP_LOGI(PUMP_TAG,    "%d", g_state.pump_2_triggered);
-        ESP_LOGI(TANK_TAG,    "%d", g_state.tank_state);
-        ESP_LOGI(PIPE_TAG,    "%d", g_state.pipe_state);
-        ESP_LOGI(IRRIG_TAG,   "irrig_amount=%d", irrig_amount);
+        ESP_LOGI(TEMP_TAG,    "Temperature: %dc", g_state.temperature/10);
+        ESP_LOGI(HUM_TAG,     "Humidity: %d%%", g_state.humidity/10);
+        ESP_LOGI(FLOW_TAG,    "Sen 1: %d L/m", g_state.flow_sens_1);
+        ESP_LOGI(FLOW_TAG,    "Sen 2: %d L/m", g_state.flow_sens_2);
+        ESP_LOGI(LDR_TAG,     "Light intensity at %d%%", g_state.light_intensity);
+        ESP_LOGI(MOIST_TAG,   "Sen 1: %d%%", g_state.moisture_1);
+        ESP_LOGI(MOIST_TAG,   "Sen 2: %d%%", g_state.moisture_2);
+        ESP_LOGI(MOIST_TAG,   "Sen 3: %d%%", g_state.moisture_3);
+        ESP_LOGI(MOIST_TAG,   "Sen 4: %d%%", g_state.moisture_4);
+        ESP_LOGI(PUMP_TAG,    "Pump 1 On? %d", g_state.pump_1_state);
+        ESP_LOGI(PUMP_TAG,    "Pump 2 On? %d", g_state.pump_2_state);
+        ESP_LOGI(PUMP_TAG,    "Pump 1 Triggered? %d", g_state.pump_1_triggered);
+        ESP_LOGI(PUMP_TAG,    "Pump 2 Triggered? %d", g_state.pump_2_triggered);
+        ESP_LOGI(TANK_TAG,    "Contains Water? %d", g_state.tank_state);
+        ESP_LOGI(PIPE_TAG,    "Issues? %d", g_state.pipe_state);
+        ESP_LOGI(IRRIG_TAG,   "Irrigation Amount = %d", irrig_amount);
         ESP_LOGI(GENERAL_TAG, "++++++++++++++");
 
         line_1_avg = (uint8_t)(g_state.moisture_1 + g_state.moisture_2) / 2;
         line_2_avg = (uint8_t)(g_state.moisture_3 + g_state.moisture_4) / 2;
 
+        #ifdef NORMAL
         // ── STOP CONDITION ───────────────────────────────────────────────
         // irrig_amount persists from the previous iteration so this always
         // checks against the target that was actually set for this cycle.
@@ -229,5 +233,15 @@ void app_main(void)
         {
             pump_on(2);
         }
+        #endif
+        #ifdef PUMP_TESTING
+        pump_on(1);
+        pump_on(2);
+        delay_ms(2000);
+        pump_off(1);
+        pump_off(2);
+        #endif
+
+        
     }
 }
