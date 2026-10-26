@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.11" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Smart plant watering: explainer</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+  <style>
+  :root{--bg:#fdfdfb;--fg:#1d1d1f;--muted:#666;--line:#ddd;--code:#f2f2ef;--accent:#2a6fdb}
+  @media (prefers-color-scheme:dark){:root{--bg:#16171a;--fg:#e6e6e6;--muted:#999;--line:#333;--code:#22242a;--accent:#7aa7ff}}
+  html{background:var(--bg)}
+  body{background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,sans-serif;max-width:900px;margin:0 auto;padding:24px 16px}
+  a{color:var(--accent)} h1,h2,h3{line-height:1.25} h1:not(.title){font-size:1.5em;border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:2em}
+  code{background:var(--code);padding:1px 4px;border-radius:4px;font-size:.9em}
+  pre{background:var(--code);padding:12px;border-radius:8px;overflow-x:auto} pre code{padding:0}
+  pre.mermaid{background:transparent;text-align:center;overflow-x:auto}
+  table{border-collapse:collapse;width:100%;display:block;overflow-x:auto} th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+  blockquote{border-left:4px solid var(--accent);margin:0;padding:4px 16px;color:var(--muted)}
+  #TOC{border:1px solid var(--line);border-radius:8px;padding:8px 16px;margin-bottom:24px}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script>
+  addEventListener('DOMContentLoaded',async()=>{
+    document.querySelectorAll('pre.mermaid').forEach(p=>{p.textContent=p.textContent});
+    mermaid.initialize({startOnLoad:false,theme:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'default'});
+    for(const el of document.querySelectorAll('pre.mermaid')){try{await mermaid.run({nodes:[el]})}catch(e){console.error(e)}}
+    // keep each diagram at its natural size (wide ones scroll sideways instead of shrinking to unreadable)
+    document.querySelectorAll('pre.mermaid svg').forEach(svg=>{const w=parseFloat(svg.style.maxWidth);if(w){svg.setAttribute('width',w);svg.style.maxWidth='none'}});
+  });
+  </script>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Smart plant watering: explainer</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#what-this-is" id="toc-what-this-is">1. What this
+is</a></li>
+<li><a href="#the-big-picture" id="toc-the-big-picture">2. The big
+picture</a></li>
+<li><a href="#how-it-works-step-by-step"
+id="toc-how-it-works-step-by-step">3. How it works, step by step</a>
+<ul>
+<li><a href="#a.-starting-up" id="toc-a.-starting-up">3a. Starting
+up</a></li>
+<li><a href="#b.-the-watering-decision-main-loop"
+id="toc-b.-the-watering-decision-main-loop">3b. The watering decision
+(main loop)</a></li>
+<li><a href="#c.-background-tasks-always-running"
+id="toc-c.-background-tasks-always-running">3c. Background tasks (always
+running)</a></li>
+<li><a href="#d.-pressing-pump-on-in-the-app-or-web-page"
+id="toc-d.-pressing-pump-on-in-the-app-or-web-page">3d. Pressing “Pump
+on” in the app or web page</a></li>
+</ul></li>
+<li><a href="#where-each-feature-lives-in-the-code"
+id="toc-where-each-feature-lives-in-the-code">4. Where each feature
+lives in the code</a></li>
+<li><a href="#folder-tour" id="toc-folder-tour">5. Folder tour</a></li>
+<li><a href="#data-and-settings" id="toc-data-and-settings">6. Data and
+settings</a></li>
+<li><a href="#how-to-run-it" id="toc-how-to-run-it">7. How to run
+it</a></li>
+<li><a href="#glossary" id="toc-glossary">8. Glossary</a></li>
+<li><a href="#known-mismatches-worth-checking"
+id="toc-known-mismatches-worth-checking">Known mismatches worth
+checking</a></li>
+</ul>
+</nav>
+<p><em>Generated 2026-10-27. Read top to bottom: the big picture comes
+first, the details after.</em></p>
+<h1 id="what-this-is">1. What this is</h1>
+<p>A graduation project: a small <strong>automatic plant-watering
+system</strong>. A box built around an <strong>ESP32</strong> (a cheap
+Wi-Fi-enabled microcontroller, i.e. a tiny computer on one chip) reads
+soil moisture, temperature, humidity, light and water flow, and decides
+when to switch two water pumps on. The ESP32 makes its own Wi-Fi
+network, so a <strong>phone app</strong> (Android, Java) and a
+<strong>web dashboard</strong> (Next.js, a React-based website
+framework) can connect straight to it to show readings, press pump
+buttons and change settings. There is also a custom circuit board design
+(KiCad) and a pile of datasheets. State: the firmware, web app and
+Android app all exist and talk to each other; it looks like a work in
+progress. In the current working copy the automatic pump switching is
+commented out in <code>embedded/src/main.c</code> (an uncommitted edit
+of yours), so only the manual buttons turn pumps on.</p>
+<h1 id="the-big-picture">2. The big picture</h1>
+<pre class="mermaid"><code>flowchart TD
+    sensors[&quot;Sensors: soil x4, temp/humidity, light, flow x2&quot;] --&gt; esp
+    esp[&quot;ESP32 firmware (the brain)&quot;] --&gt; pumps[&quot;2 water pumps&quot;]
+    esp --&gt; lcd[&quot;16x2 LCD + LED&quot;]
+    esp &lt;--&gt;|&quot;Wi-Fi, HTTP/JSON&quot;| phone[&quot;Android app&quot;]
+    esp &lt;--&gt;|&quot;Wi-Fi, HTTP/JSON&quot;| web[&quot;Web dashboard&quot;]</code></pre>
+<p>The ESP32 is the centre of everything. It <strong>creates its own
+Wi-Fi network</strong> (name <code>ESP32_AP</code>, address
+<code>192.168.4.1</code>), so there is no router or internet needed. It
+runs a tiny web server. The phone app and the web page are just two
+“remote controls” that send requests to that server: “give me the
+readings”, “turn pump 1 on”, “here are new settings”. No cloud, no
+database: all state lives in the ESP32’s memory.</p>
+<h1 id="how-it-works-step-by-step">3. How it works, step by step</h1>
+<h2 id="a.-starting-up">3a. Starting up</h2>
+<pre class="mermaid"><code>flowchart TD
+    power[&quot;Power on&quot;] --&gt; wait[&quot;Wait 5 s, start serial log&quot;]
+    wait --&gt; init[&quot;Set up LED, LCD, Wi-Fi + web server, sensors, pumps&quot;]
+    init --&gt; defaults[&quot;Load default settings (profile)&quot;]
+    defaults --&gt; tasks[&quot;Start 4 background tasks&quot;]
+    tasks --&gt; loop[&quot;Main loop: decide about watering every 2 s&quot;]</code></pre>
+<p>On boot, <code>app_main</code> in <code>embedded/src/main.c</code>
+initialises each part in turn, blinks the LED, shows “BOOTED!” on the
+LCD, then runs forever. Settings are <strong>not saved</strong>: after a
+reboot they go back to the defaults in <code>init_states</code>.</p>
+<h2 id="b.-the-watering-decision-main-loop">3b. The watering decision
+(main loop)</h2>
+<pre class="mermaid"><code>flowchart TD
+    start[&quot;Every 2 s: average moisture of line 1 and line 2&quot;] --&gt; full{&quot;Soil at or above target?&quot;}
+    full --&gt;|&quot;yes&quot;| off[&quot;Switch that pump off&quot;]
+    full --&gt;|&quot;no&quot;| light{&quot;Light above threshold? (daytime)&quot;}
+    off --&gt; light
+    light --&gt;|&quot;yes&quot;| allOff[&quot;Pumps off, skip watering&quot;]
+    light --&gt;|&quot;no&quot;| weather[&quot;Pick target from weather: hot/dry, hot/humid, cold/dry, cold/wet, normal&quot;]
+    weather --&gt; dry{&quot;Line average at or below &#39;too dry&#39; level?&quot;}
+    dry --&gt;|&quot;yes&quot;| trig[&quot;Mark that line&#39;s pump as triggered&quot;]
+    dry --&gt;|&quot;no&quot;| nothing[&quot;Do nothing&quot;]
+    trig --&gt; act[&quot;Switch triggered pumps on (currently commented out)&quot;]</code></pre>
+<p>Plain words: the four soil sensors are paired into two “lines”
+(sensors 1+2 and 3+4), each line with its own pump. Watering never
+happens in daylight. At night, if a line is drier than
+<code>moist_lower</code>, its pump is flagged. The target moisture it
+waters up to is <code>moist_upper</code>, nudged up when it is hot and
+dry (+20) or hot and humid (+8) and down when it is cold (-5 dry, -15
+wet). Once the line reaches the target the pump is switched off.</p>
+<h2 id="c.-background-tasks-always-running">3c. Background tasks (always
+running)</h2>
+<pre class="mermaid"><code>flowchart TD
+    state[&quot;state_task every 10 s: read all sensors into g_state&quot;] --&gt; g[&quot;g_state: one shared box of current values&quot;]
+    lcdT[&quot;lcd_task every 0.3 s: show values on LCD&quot;] --&gt; g
+    ledT[&quot;wifi_led_indicator: blink LED while Wi-Fi is up&quot;] --&gt; g
+    http[&quot;Web server handlers: read g_state / change pumps and profile&quot;] --&gt; g
+    mainLoop[&quot;Main loop: reads g_state, drives pumps&quot;] --&gt; g</code></pre>
+<p><code>g_state</code> (defined in
+<code>embedded/include/esp_idf_common.h</code>) is the shared notebook
+everybody reads and writes. Each task is a <strong>FreeRTOS
+task</strong> (FreeRTOS is the small operating system on the ESP32; a
+task is a function that runs in parallel with others).
+<code>irrigation_task</code> exists but is an empty placeholder.</p>
+<h2 id="d.-pressing-pump-on-in-the-app-or-web-page">3d. Pressing “Pump
+on” in the app or web page</h2>
+<pre class="mermaid"><code>sequenceDiagram
+    participant U as You
+    participant A as App or web page
+    participant E as ESP32
+    U-&gt;&gt;A: Tap pump 1 on
+    A-&gt;&gt;E: POST /api/pump with pump 1, state on
+    E-&gt;&gt;E: pump_on(1) sets pin high, updates g_state
+    E--&gt;&gt;A: JSON status ok
+    A-&gt;&gt;E: GET /api/status every few seconds
+    E--&gt;&gt;A: all readings and pump states</code></pre>
+<p>The same <code>/api/status</code> poll feeds the dashboards (web
+polls every 3 s). Flow sensors then confirm water is really moving:
+<code>read_tank</code> flags an empty tank if both pumps run but no flow
+shows, and <code>read_pipe</code> flags a blocked or leaking pipe if
+only one of the two flows.</p>
+<h1 id="where-each-feature-lives-in-the-code">4. Where each feature
+lives in the code</h1>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Feature</th>
+<th>What it does (plain words)</th>
+<th>Where</th>
+<th>Key functions/classes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Boot and watering logic</td>
+<td>Sets everything up, decides when to water based on moisture, weather
+and daylight</td>
+<td><code>embedded/src/main.c</code></td>
+<td><code>app_main</code>, <code>irrig_amount</code>,
+<code>OFFSET_*</code> constants</td>
+</tr>
+<tr>
+<td>Shared state and defaults</td>
+<td>One struct holding every reading, pump state and the settings
+profile</td>
+<td><code>embedded/include/esp_idf_common.h</code>,
+<code>embedded/src/esp_idf_common.c</code></td>
+<td><code>status_t</code>, <code>profile_t</code>, <code>g_state</code>,
+<code>init_states</code>, <code>delay_ms</code>,
+<code>init_adc1_shared</code></td>
+</tr>
+<tr>
+<td>Background tasks</td>
+<td>Sensor reading, LCD refresh, Wi-Fi LED</td>
+<td><code>embedded/src/tasks.c</code></td>
+<td><code>init_tasks</code>, <code>state_task</code>,
+<code>lcd_task</code>, <code>wifi_led_indicator</code>,
+<code>irrigation_task</code> (empty)</td>
+</tr>
+<tr>
+<td>Soil moisture</td>
+<td>Reads 4 probes, median of 5 samples, converts to 0-100 %</td>
+<td><code>embedded/src/moisture_sensor.c</code></td>
+<td><code>init_moisture</code>, <code>read_moisture</code>,
+<code>read_median</code></td>
+</tr>
+<tr>
+<td>Light sensor (LDR)</td>
+<td>Reads brightness as 0-100 %</td>
+<td><code>embedded/src/ldr_sensor.c</code></td>
+<td><code>init_ldr</code>, <code>read_ldr</code></td>
+</tr>
+<tr>
+<td>Temperature and humidity</td>
+<td>Reads the DHT sensor (library in
+<code>components/dht-1.2.0</code>)</td>
+<td><code>embedded/src/t_h_sensor.c</code></td>
+<td><code>read_th</code></td>
+</tr>
+<tr>
+<td>Water flow</td>
+<td>Counts pulses from 2 flow sensors, converts to litres/min</td>
+<td><code>embedded/src/flow_sensor.c</code></td>
+<td><code>init_flow_sensors</code>, <code>read_flow_sens</code>,
+interrupt handlers <code>isr_sensor1/2</code></td>
+</tr>
+<tr>
+<td>Pumps</td>
+<td>Switch the two pumps on/off through GPIO pins</td>
+<td><code>embedded/src/pump.c</code></td>
+<td><code>init_pumps</code>, <code>pump_on</code>,
+<code>pump_off</code></td>
+</tr>
+<tr>
+<td>Tank and pipe checks</td>
+<td>Infers “tank empty” and “pipe problem” from flow readings</td>
+<td><code>embedded/src/tank.c</code>,
+<code>embedded/src/pipe.c</code></td>
+<td><code>read_tank</code>, <code>read_pipe</code></td>
+</tr>
+<tr>
+<td>LCD 16x2</td>
+<td>Writes readings to the screen (4-bit mode)</td>
+<td><code>embedded/src/lcd.c</code></td>
+<td><code>init_lcd</code>, <code>lcd_write_string</code>,
+<code>lcd_set_cursor</code>, <code>lcd_clear</code></td>
+</tr>
+<tr>
+<td>Status LED</td>
+<td>Blink patterns (boot, Wi-Fi, names)</td>
+<td><code>embedded/src/led.c</code></td>
+<td><code>led_on/off</code>, <code>blink_5</code>,
+<code>blink_wifi</code></td>
+</tr>
+<tr>
+<td>Wi-Fi access point + HTTP API</td>
+<td>Makes the <code>ESP32_AP</code> network and serves JSON</td>
+<td><code>embedded/src/networking.c</code></td>
+<td><code>init_networking</code>, <code>start_webserver</code>,
+<code>status_handler</code>, <code>pump_handler</code>,
+<code>led_handler</code>, <code>profile_get_handler</code>,
+<code>profile_post_handler</code></td>
+</tr>
+<tr>
+<td>Serial log, console input, button</td>
+<td>Debug output over USB, typed input, a button that lights the
+LED</td>
+<td><code>embedded/src/uart.c</code>, <code>serial_input.c</code>,
+<code>button.c</code></td>
+<td><code>init_monitoring_uart</code>, <code>get_serial_input</code>,
+<code>on_press</code> (not called from main)</td>
+</tr>
+<tr>
+<td>Web: connection to ESP32</td>
+<td>All requests to the device, plus a “connected?” ping</td>
+<td><code>web/lib/espApi.jsx</code>,
+<code>web/lib/useEspConnection.jsx</code></td>
+<td><code>getSensors</code>, <code>setPump</code>, <code>setLed</code>,
+<code>createProfile</code>, <code>useEspConnection</code></td>
+</tr>
+<tr>
+<td>Web: dashboard</td>
+<td>Live readings, refreshed every 3 s</td>
+<td><code>web/app/dashboard/page.jsx</code></td>
+<td><code>fetchSensorData</code></td>
+</tr>
+<tr>
+<td>Web: manual control</td>
+<td>Pump on/off buttons</td>
+<td><code>web/app/manual/page.jsx</code></td>
+<td><code>pumpOn</code>, <code>pumpOff</code></td>
+</tr>
+<tr>
+<td>Web: plant profiles</td>
+<td>Create/edit profiles (stored in the browser), send the active one to
+the ESP32</td>
+<td><code>web/app/plants/page.jsx</code></td>
+<td><code>saveProfiles</code>, <code>sendPlantProfile</code></td>
+</tr>
+<tr>
+<td>Web: layout and menus</td>
+<td>Page frame, side menu, dark/light theme; <code>/</code> redirects to
+the dashboard</td>
+<td><code>web/app/layout.jsx</code>, <code>web/app/page.jsx</code>,
+<code>web/components/</code></td>
+<td><code>Sidebar</code>, <code>MobileNav</code>,
+<code>ThemeScript</code></td>
+</tr>
+<tr>
+<td>Android: connection</td>
+<td>Describes the API and the device address</td>
+<td><code>mobile/app/src/main/java/com/example/firstcourse/data/remote/</code></td>
+<td><code>ApiService</code>, <code>RetrofitClient</code></td>
+</tr>
+<tr>
+<td>Android: data layer</td>
+<td>Calls the API, wraps results; mock-data switch (off)</td>
+<td><code>.../data/repository/DeviceRepository.java</code>,
+<code>.../data/mock/MockData.java</code>,
+<code>.../data/model/</code></td>
+<td><code>DeviceRepository</code>, <code>USE_MOCK_DATA</code>,
+<code>DeviceStatus</code>, <code>IrrigationProfile</code></td>
+</tr>
+<tr>
+<td>Android: screens</td>
+<td>Dashboard, pump controls, LED, profiles</td>
+<td><code>.../MainActivity.java</code>,
+<code>ControlsActivity.java</code>,
+<code>LedControlActivity.java</code>, <code>ProfileActivity.java</code>,
+<code>.../ui/*</code></td>
+<td><code>MainActivity</code>, <code>DashboardViewModel</code>,
+<code>ControlsViewModel</code>, <code>AnimatedDashboardView</code>,
+<code>ProfileAdapter</code></td>
+</tr>
+<tr>
+<td>Circuit board</td>
+<td>Custom ESP32 board design</td>
+<td><code>pcb/ESP32_Board.kicad_*</code>,
+<code>pcb/ESP32_Board.pdf</code></td>
+<td>(KiCad files)</td>
+</tr>
+</tbody>
+</table>
+<h1 id="folder-tour">5. Folder tour</h1>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Folder</th>
+<th>What lives there</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>embedded/</code></td>
+<td>ESP32 firmware in C (PlatformIO + ESP-IDF). <code>src/</code> code,
+<code>include/</code> headers. Ignore <code>components/dht-1.2.0</code>
+and <code>managed_components/</code> (third-party libraries),
+<code>sdkconfig.esp32dev</code> (generated config)</td>
+</tr>
+<tr>
+<td><code>web/</code></td>
+<td>Next.js dashboard. <code>app/</code> pages, <code>lib/</code> talks
+to ESP32, <code>components/</code> menus. Ignore
+<code>public/*.svg</code>, <code>package-lock.json</code></td>
+</tr>
+<tr>
+<td><code>mobile/</code></td>
+<td>Android Studio project (Java). Real code is in
+<code>app/src/main/java/com/example/firstcourse/</code>. Ignore
+<code>gradle/</code>, <code>gradlew*</code>, <code>res/drawable</code>
+icons. <code>new.sh</code>, <code>new2.sh</code> are small git helper
+scripts, not app code</td>
+</tr>
+<tr>
+<td><code>pcb/</code></td>
+<td>KiCad circuit board design; <code>.history/</code> is KiCad’s own
+backup (and has a nested git repo inside)</td>
+</tr>
+<tr>
+<td><code>datasheets/</code></td>
+<td>Part datasheets (ESP32, LCD, LM2596, TP4056, MOSFETs, flow sensor)
+and screenshots</td>
+</tr>
+<tr>
+<td><code>c-prototype/</code></td>
+<td>Early test: a plain C program with an old “profile” idea (times per
+day, water amount). Not used by anything else</td>
+</tr>
+</tbody>
+</table>
+<h1 id="data-and-settings">6. Data and settings</h1>
+<ul>
+<li><strong>On the ESP32:</strong> everything is in RAM
+(<code>g_state</code>). The settings “profile” (defaults: moist_upper
+80, moist_lower 20, temp_upper 40, temp_lower 5, hum_upper 60, hum_lower
+20, light_threshold 85) is lost on reboot. NVS (the ESP32’s small
+saved-settings area) is initialised in <code>main.c</code> but nothing
+is stored in it.</li>
+<li><strong>Web:</strong> profiles are saved in the browser’s
+<code>localStorage</code> under <code>plantThresholdProfiles</code> and
+<code>activePlantThresholdProfile</code>.</li>
+<li><strong>Android:</strong> profiles go through the API; mock data
+exists in <code>MockData.java</code> but is switched off.</li>
+<li><strong>Config files:</strong> <code>embedded/platformio.ini</code>
+(board and build), <code>embedded/sdkconfig.esp32dev</code>, Wi-Fi name
+and password are <code>#define</code>d in
+<code>embedded/include/networking.h</code> (a hard-coded password sits
+in the tracked source), device address <code>192.168.4.1</code> in
+<code>web/lib/espApi.jsx</code>,
+<code>web/lib/useEspConnection.jsx</code> and
+<code>.../data/remote/RetrofitClient.java</code>.</li>
+<li><strong>Pins</strong> (from the headers): pumps 17/16, flow 22/23,
+DHT 18, LED 2, LDR 39, moisture power 14, LCD 13/27/26/25/21/19. Note
+the button pin (21) is the same as an LCD pin (D6), and two pins are
+marked <code>// PROBLEM</code> in the source.</li>
+</ul>
+<h1 id="how-to-run-it">7. How to run it</h1>
+<ul>
+<li><strong>Firmware:</strong> from <code>embedded/</code>,
+<code>pio run -t upload</code> then <code>pio device monitor</code>
+(PlatformIO, 115200 baud).
+<code>[reconstructed from code shape only]</code> the commands come from
+<code>platformio.ini</code>, not from a doc.</li>
+<li><strong>Web:</strong> from <code>web/</code>,
+<code>npm install</code> then <code>npm run dev</code>, open
+http://localhost:3000. Your computer must be on the
+<code>ESP32_AP</code> Wi-Fi to see data.</li>
+<li><strong>Android:</strong> open <code>mobile/</code> in Android
+Studio and run on a phone joined to <code>ESP32_AP</code>. (Plain HTTP;
+<code>AndroidManifest.xml</code> cleartext setting not verified.)</li>
+</ul>
+<h1 id="glossary">8. Glossary</h1>
+<ul>
+<li><strong>ESP32</strong>: a Wi-Fi-capable microcontroller (tiny
+single-chip computer).</li>
+<li><strong>Firmware</strong>: the program that runs on the ESP32.</li>
+<li><strong>ESP-IDF / PlatformIO</strong>: the official ESP32 toolkit,
+and the build/upload tool that wraps it.</li>
+<li><strong>FreeRTOS task</strong>: a function running “in parallel”
+with others on the ESP32.</li>
+<li><strong>GPIO pin</strong>: a metal leg on the chip you can switch
+on/off or read.</li>
+<li><strong>ADC</strong>: converts a voltage (like a soil probe signal)
+to a number.</li>
+<li><strong>Interrupt (ISR)</strong>: code that runs instantly when a
+pin changes, used to count flow-sensor pulses.</li>
+<li><strong>SoftAP</strong>: the ESP32 acting as the Wi-Fi hotspot
+itself.</li>
+<li><strong>HTTP / JSON / API</strong>: the way apps ask the ESP32 for
+data: web requests with small text replies; the list of allowed requests
+is the API (<code>/api/status</code>, <code>/api/pump</code>,
+<code>/api/led</code>, <code>/api/profile</code>).</li>
+<li><strong>Profile</strong>: the set of thresholds (moisture,
+temperature, humidity, light) that steer watering.</li>
+<li><strong>LDR</strong>: a light-dependent resistor, a light
+sensor.</li>
+<li><strong>DHT</strong>: a combined temperature and humidity
+sensor.</li>
+<li><strong>LCD</strong>: the small text display.</li>
+<li><strong>Next.js / React</strong>: website tools used for the
+dashboard.</li>
+<li><strong>Retrofit / Gson</strong>: Android libraries for web requests
+and reading JSON.</li>
+<li><strong>ViewModel / LiveData</strong>: Android pieces that hold
+screen data and update the screen when it changes.</li>
+<li><strong>KiCad</strong>: free software for designing circuit
+boards.</li>
+<li><strong>localStorage</strong>: small storage inside the
+browser.</li>
+</ul>
+<h1 id="known-mismatches-worth-checking">Known mismatches worth
+checking</h1>
+<ul>
+<li>The web app sends profiles with keys like
+<code>moistureThreshold</code>, the Android app sends
+<code>moisture_threshold</code>, but the firmware only reads
+<code>moist_upper</code>, <code>moist_lower</code>,
+<code>temp_upper</code>, <code>temp_lower</code>,
+<code>hum_upper</code>, <code>hum_lower</code>,
+<code>light_threshold</code>. As written, profile changes from either
+app do not seem to change anything on the device. Not tested on
+hardware.</li>
+<li><code>DELETE /api/profile</code> is called by the apps, but the
+firmware has no such route.</li>
+<li>Fresh sensor values arrive only every 10 s, while the main loop runs
+every 2 s.</li>
+</ul>
+</body>
+</html>
